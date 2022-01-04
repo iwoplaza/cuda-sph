@@ -2,12 +2,16 @@ import numpy as np
 import json
 import os
 
-import constants
+import common.results_managing.constants as constants
 
 
 class Saver:
     """
-    Class for saving simulation data
+    Class for saving simulation data.
+    The saver saves file in specified directory and save:
+        - settings.json for number of particles and Pipe object
+        - particles_%d.npy - to save state about particles
+        - pressure_%d.npy - to save state about pressure
     """
 
     def __init__(self, folder_path: str, pipe, particles_number) -> None:
@@ -16,12 +20,13 @@ class Saver:
         :param pipe: Pipe object
         :param particles_number: number of simulated particles
         """
-        os.mkdir(folder_path)
-        self.folder_path = folder_path
+        self.__folder_path = folder_path
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
         json_object = {constants.PIPE: pipe, constants.PARTICLES_NUMBER: particles_number}
-        with open(folder_path + constants.SETTINGS_FILE) as file:
+        with open(folder_path + constants.SETTINGS_FILE, "w") as file:
             json.dump(json_object, file)
-        self.current_epoch = 0
+        self.__current_epoch = 0
 
     def save_next_epoch(self, particles_state: np.ndarray, pressure_state: np.ndarray) -> None:
         """
@@ -29,6 +34,6 @@ class Saver:
         :param particles_state: Numpy matrix with information about positions and velocity of particles
         :param pressure_state: Numpy matrix with information about pressure
         """
-        np.save(self.folder_path + constants.PARTICLES_FILE % self.current_epoch, particles_state)
-        np.save(self.folder_path + constants.PRESSURE_FILE % self.current_epoch, pressure_state)
-        self.current_epoch = self.current_epoch+1
+        np.save(self.__folder_path + constants.PARTICLES_FILE % self.__current_epoch, particles_state)
+        np.save(self.__folder_path + constants.PRESSURE_FILE % self.__current_epoch, pressure_state)
+        self.__current_epoch = self.__current_epoch + 1
