@@ -1,7 +1,10 @@
 from __future__ import annotations
+from kernels.kernels import density_kernel
 from state_generator import StateGenerator
 from utils import *
 from copy import deepcopy
+import cupy as cp 
+
 
 
 class StateGenerator:
@@ -14,7 +17,11 @@ class StateGenerator:
 
     
     def __cuda_pipeline(self) -> None:
-        pass
+        d_density = cp.array(self.current_state.density)
+        d_position = cp.array(self.current_state.position)
+        d_pressure = cp.array(self.current_state.pressure)
+        d_velocity = cp.array(self.current_state.velocity)
+        density_kernel[n_blocks, n_threads](d_density, d_position, )
 
 
     def __next__(self) -> SimulationState:
@@ -22,6 +29,7 @@ class StateGenerator:
             raise StopIteration
         self.frame_idx += 1
         return f"Frame number {self.frame_idx}"
+
 
     def __iter__(self) -> StateGenerator:
         return self

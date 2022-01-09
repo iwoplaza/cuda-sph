@@ -3,7 +3,6 @@ from utils import SimulationState
 from state_generator import StateGenerator
 
 
-
 class Serializer:
     def serialize(self, state: SimulationState) -> None:
         print(f"Serialized < {state} >")
