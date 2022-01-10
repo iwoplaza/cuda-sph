@@ -127,31 +127,47 @@ def integrating_kernel(
 
 
 if __name__ == "__main__":
-    N_ELEMENTS = int(3e4)
-    GRID_SIZE = 128
+    N_ELEMENTS = int(3e6)
+    block_size = 128
+    n_blocks = math.ceil(N_ELEMENTS / block_size)
+
+    MASS = 1e-5
+    K_CONST = 0.5
+    RO_0_CONST = 0.056
+    INF_RADIUS = 1e-4
+
     dens = np.zeros(N_ELEMENTS).astype("float64")
-    pos = (
-        np.random.randint(0, 127, 3 * N_ELEMENTS)
+    position = (
+        np.random.random(3 * N_ELEMENTS)
         .reshape((N_ELEMENTS, 3))
-        .astype("float32")
+        .astype("float64")
     )
-    pos2 = (
-        np.random.randint(0, 127, 3 * N_ELEMENTS)
+    density = (
+        np.random.random(N_ELEMENTS)
+        .astype("float64")
+    )
+    velocity = (
+        np.random.random(3 * N_ELEMENTS)
         .reshape((N_ELEMENTS, 3))
-        .astype("float32")
+        .astype("float64")
     )
-    pos3 = (
+    pressure_term = (
         np.zeros(3 * N_ELEMENTS)
         .reshape((N_ELEMENTS, 3))
-        .astype("float32")
+        .astype("float64")
     )
-    d_dens = cuda.to_device(dens)
-    d_pos = cuda.to_device(pos)
-    d_pos2 = cuda.to_device(pos2)
-    d_pos3 = cuda.to_device(pos3)
+    viscosity_term = (
+        np.zeros(3 * N_ELEMENTS)
+        .reshape((N_ELEMENTS, 3))
+        .astype("float64")
+    )
+    # send to gpu
+    d_density = cuda.to_device(density)
+    d_position = cuda.to_device(position)
+    d_velocity = cuda.to_device(velocity)
+    d_pressure_term = cuda.to_device(pressure_term)
+    d_viscosity_term = cuda.to_device(viscosity_term)
 
-    print(pos)
-    pressure_kernel[N_ELEMENTS // GRID_SIZE + 10, GRID_SIZE](
-        d_dens, d_pos, d_pos3, 0.1,  0.1, 0.1, 1000
-    )
-    print(np.sum(d_pos3.copy_to_host().reshape))
+    print(pressure_term)
+    pressure_kernel[n_blocks, block_size](d_density, d_position, d_pressure_term, MASS, INF_RADIUS, K_CONST, RO_0_CONST)
+    print(d_pressure_term.copy_to_host())
