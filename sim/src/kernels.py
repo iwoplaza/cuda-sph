@@ -1,15 +1,11 @@
-from copyreg import dispatch_table
-
-# from numpy.typing import ndarray
 from numpy import ndarray
 from numba import cuda
 import numpy as np
-import cupy as cp
 import math
 
 
 @cuda.jit
-def density_kernel(density: ndarray, position: ndarray, mass: float, inf_radius: float):
+def density_kernel(density: ndarray, position: ndarray, mass: np.float64, inf_radius: np.float64):
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
     block_width = cuda.blockDim.x
@@ -38,10 +34,10 @@ def pressure_kernel(
     density: ndarray,
     position: ndarray,
     pressure_term: ndarray,
-    mass: float,
-    inf_radius: float,
-    k: float,
-    ro_0: float,
+    mass: np.float64,
+    inf_radius: np.float64,
+    k: np.float64,
+    ro_0: np.float64,
 ):
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
@@ -85,9 +81,9 @@ def viscosity_kernel(
     position: ndarray,
     velocity: ndarray,
     viscosity_term: ndarray,
-    mass: float,
-    inf_radius: float,
-    viscosity_const: float,
+    mass: np.float64,
+    inf_radius: np.float64,
+    viscosity_const: np.float64,
 ):
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
@@ -119,15 +115,36 @@ def viscosity_kernel(
             viscosity_const * new_viscosity_term[dim] / density[i]
         )
 
-
+@cuda.jit
 def integrating_kernel(
-    density: ndarray, postion: ndarray, mass: float, inf_radius: float
+    external_force: ndarray,
+    pressure_term: ndarray,
+    viscosity_term: ndarray,
+    position: ndarray,
+    velocity: np.float64,
+    dt: np.float64,
+    mass: np.float64
 ):
-    pass
-
+    th_idx = cuda.threadIdx.x
+    block_idx = cuda.blockIdx.x
+    block_width = cuda.blockDim.x
+    i = block_width * block_idx + th_idx
+    if i >= position.shape[0]:
+        return
+    
+    # perform numerical integration with 'dt' timestep (in seconds)
+    result_force = cuda.local.array(3, np.float64)
+    for dim in range(3):
+        result_force[dim] = (
+            external_force[dim] +
+            pressure_term[i][dim] +
+            viscosity_term[i][dim]
+            )
+        velocity[i][dim] += result_force[dim] / mass * dt
+        position[i][dim] += velocity[i][dim] * dt
 
 if __name__ == "__main__":
-    N_ELEMENTS = int(3e3)
+    N_ELEMENTS = int(4)
     block_size = 128
     n_blocks = math.ceil(N_ELEMENTS / block_size)
 
@@ -136,38 +153,53 @@ if __name__ == "__main__":
     RO_0_CONST = 0.056
     INF_RADIUS = 1e-4
 
-    dens = np.zeros(N_ELEMENTS).astype("float64")
-    position = (
-        np.random.random(3 * N_ELEMENTS)
-        .reshape((N_ELEMENTS, 3))
-        .astype("float64")
-    )
-    density = (
-        np.random.random(N_ELEMENTS)
-        .astype("float64")
-    )
-    velocity = (
-        np.random.random(3 * N_ELEMENTS)
-        .reshape((N_ELEMENTS, 3))
-        .astype("float64")
-    )
-    pressure_term = (
-        np.zeros(3 * N_ELEMENTS)
-        .reshape((N_ELEMENTS, 3))
-        .astype("float64")
-    )
-    viscosity_term = (
-        np.zeros(3 * N_ELEMENTS)
-        .reshape((N_ELEMENTS, 3))
-        .astype("float64")
-    )
-    # send to gpu
-    d_density = cuda.to_device(density)
-    d_position = cuda.to_device(position)
-    d_velocity = cuda.to_device(velocity)
-    d_pressure_term = cuda.to_device(pressure_term)
-    d_viscosity_term = cuda.to_device(viscosity_term)
+    dt = 1/60
 
-    print(pressure_term)
-    pressure_kernel[n_blocks, block_size](d_density, d_position, d_pressure_term, MASS, INF_RADIUS, K_CONST, RO_0_CONST)
-    print(d_pressure_term.copy_to_host())
+    external_force = np.random.random(3).astype("float64")
+
+    dens = np.zeros(N_ELEMENTS).astype("float64")
+    old_state = {
+        "position": (
+            np.random.random(3 * N_ELEMENTS)
+            .reshape((N_ELEMENTS, 3))
+            .astype("float64")
+        ),
+        "density": (
+            np.random.random(N_ELEMENTS)
+            .astype("float64")
+        ),
+        "velocity": (
+            np.random.random(3 * N_ELEMENTS)
+            .reshape((N_ELEMENTS, 3))
+            .astype("float64")
+        ),
+        "pressure_term": (
+            np.zeros(3 * N_ELEMENTS)
+            .reshape((N_ELEMENTS, 3))
+            .astype("float64")
+        ),
+        "viscosity_term": (
+            np.zeros(3 * N_ELEMENTS)
+            .reshape((N_ELEMENTS, 3))
+            .astype("float64")
+        )
+    }
+    
+    # send to gpu
+    d_density = cuda.to_device(old_state["density"])
+    d_position = cuda.to_device(old_state["position"])
+    d_velocity = cuda.to_device(old_state["velocity"])
+    d_pressure_term = cuda.to_device(old_state["pressure_term"])
+    d_viscosity_term = cuda.to_device(old_state["viscosity_term"])
+    d_external_force = cuda.to_device(external_force)
+
+    integrating_kernel[n_blocks, block_size](
+    d_external_force,
+    d_pressure_term,
+    d_viscosity_term,
+    d_position,
+    d_velocity,
+    dt,
+    MASS)
+
+    print(d_position.copy_to_host())
