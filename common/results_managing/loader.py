@@ -2,6 +2,8 @@ import numpy as np
 import json
 import common.results_managing.constants as constants
 
+from sim.src.utils import SimulationState, SimulationParameters, Pipe, Segment
+
 
 class Loader:
     """
@@ -16,30 +18,41 @@ class Loader:
         with open(folder_path + constants.SETTINGS_FILE) as file:
             self.__json_object = json.load(file)
 
-    def load_pipe(self):
+    def load_simulation_state(self, epoch: int) -> SimulationState:
         """
-        :return: Pipe object using at simulation
-        """
-        return self.__json_object[constants.PIPE]
+        Load simulation state for selected epoch
 
-    def load_particles_state(self, epoch: int) -> np.ndarray:
-        """
-        Load particle state in selected epoch
         :param epoch: Number of epoch to load data from
         :return: Numpy matrix with information about positions and velocity of particles
         """
-        return np.load(self.__folder_path + constants.PARTICLES_FILE % epoch)
+        return SimulationState(position=np.load(self.__folder_path + constants.POSITION_FILE % epoch),
+                               velocity=np.load(self.__folder_path + constants.VELOCITY_FILE % epoch),
+                               pressure=np.load(self.__folder_path + constants.PRESSURE_FILE % epoch),
+                               density=None, voxels=None)
 
-    def load_pressure_data(self, epoch: int) -> np.ndarray:
+    def load_simulation_parameters(self) -> SimulationParameters:
         """
-        Load pressure state in selected epoch
-        :param epoch: Number of epoch to load pressure data
-        :return: Numpy matrix with information about pressure
+        :return: Loaded SimulationParameters
         """
-        return np.load(self.__folder_path + constants.PRESSURE_FILE % epoch)
+        return SimulationParameters(fps=self.__json_object[constants.FPS],
+                                    influence_radius=self.__json_object[constants.INFLUENCE_RADIUS],
+                                    particle_mass=self.__json_object[constants.PARTICLE_MASS],
+                                    space_dims=tuple(self.__json_object[constants.SPACE_DIMS]),
+                                    voxel_dim=tuple(self.__json_object[constants.VOXEL_DIM]),
+                                    particles_number=self.__json_object[constants.PARTICLES_NUMBER],
+                                    particles_radius=self.__json_object[constants.PARTICLES_RADIUS],
+                                    simulation_duration=self.__json_object[constants.SIMULATION_DURATION],
+                                    pipe=self.__load_pipe())
 
-    def get_particles_number(self) -> int:
-        """
-        :return: Number of simulated particles
-        """
-        return self.__json_object[constants.PARTICLES_NUMBER]
+    def __load_pipe(self) -> Pipe:
+        prev_segment = None
+        segments = []
+        for segment_data in self.__json_object[constants.PIPE]:
+            print(segment_data)
+            radius = segment_data[1]
+            end_point = tuple(segment_data[0])
+            print("END point: ", end_point)
+            segment = Segment(end_point=end_point, radius=radius, prev_segment=prev_segment)
+            prev_segment = segment
+            segments.append(segment)
+        return Pipe(segments)

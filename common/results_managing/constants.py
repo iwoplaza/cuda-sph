@@ -1,6 +1,15 @@
-PARTICLES_FILE = "/particles_%d.npy"
+POSITION_FILE = "/particles_%d.npy"
+VELOCITY_FILE = "/velocity_%d.npy"
 PRESSURE_FILE = "/pressure_%d.npy"
+
 SETTINGS_FILE = "/settings.json"
 
-PIPE = "pipe"
+PARTICLE_MASS = "particle_mass"
+SIMULATION_DURATION = "simulation_duration"
+FPS = "fps"
 PARTICLES_NUMBER = "particles_number"
+PARTICLES_RADIUS = "particles_radius"
+PIPE = "pipe"
+INFLUENCE_RADIUS = "influence_radius"
+SPACE_DIMS = "space_dims"
+VOXEL_DIM = "voxel_dim"
