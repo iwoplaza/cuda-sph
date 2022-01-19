@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from numpy.typing import NDArray
+from numpy import ndarray
 from typing import Tuple, List
 
 
@@ -18,21 +18,18 @@ class Pipe:
 
 @dataclass
 class SimulationParameters:
-    particle_mass: float
-    simulation_duration: int 
+    n_particles: int
+    external_force: ndarray # single 3d vector 
+    simulation_duration: int # in seconds
     fps: int 
-    particles_number: int
-    partices_radius: float
     pipe: Pipe
-    influence_radius: float
     space_dims: Tuple[int, int, int] # (width, height, depth)
-    voxel_dim: Tuple[int, int, int] # (width, height, depth)
+    voxel_dim: Tuple[float, float, float] # (width, height, depth)
 
 
 @dataclass
 class SimulationState:
-    position: NDArray # 3d
-    velocity: NDArray # 3d
-    density: NDArray
-    pressure: NDArray
-    voxels: NDArray # 1d i = x + y*w + z*w*d ~ [x, y, z]
+    position: ndarray # (n x 3)
+    velocity: ndarray # (n x 3)
+    density: ndarray  # (n)
+    voxel: ndarray    # (n) idx = x + y*w + z*w*d
