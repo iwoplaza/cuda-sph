@@ -29,6 +29,7 @@ pip install -r ./requirements.txt
     - Obliczenie efektywnego podzialu na gridy i bloki CUDA'y, korzystając z informacji nt. podpiętych device'ów
     - Optymalizacja przeszukiwania n^2 za pomocą sąsiadów/voxeli
     - podłazcenie do serializera (na razie korzysta ze swojego, mockowego)
+    - obsłużenie odbijania się od rurki
 - Wizualizer [Iwo]
     - Szkielet projektu [Iwo]
     - Ruch kamery.
