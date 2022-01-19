@@ -33,6 +33,13 @@ class StateGenerator:
         return self
     
     def __compute_next_state(self) -> SimulationState:
+        self.__organize_voxels()
+
+        self.__compute_physics()
+
+        return self.current_state
+    
+    def __compute_physics(self) -> None:
         N: int = self.params.n_particles
 
         # send data to gpu
@@ -75,13 +82,17 @@ class StateGenerator:
         )
         cuda.synchronize()
 
-
-        return SimulationState(
+        self.current_state = SimulationState(
             d_position.copy_to_host(),
             d_velocity.copy_to_host(),
             d_new_density.copy_to_host(),
             zeros(N, dtype=int32)
         )
+    
+    def __organize_voxels(self) -> None:
+        # TODO: :)
+        pass
+
 
 
     
