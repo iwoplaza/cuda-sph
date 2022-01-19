@@ -4,9 +4,8 @@ import numpy as np
 import cupy as cp
 from numba import cuda
 
-
 @cuda.jit
-def cuda_add_arrays(A, B, C):
+def cuda_add_arrays(A, B, C, i):
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
     block_width = cuda.blockDim.x
@@ -15,6 +14,7 @@ def cuda_add_arrays(A, B, C):
 
     if idx < A.shape[0]:
         C[idx] = A[idx] + B[idx]
+        C[idx] *= i
 
 
 def cpu_add_arrays(A, B, C):
@@ -29,8 +29,8 @@ def test(A, B, C):
     return True
 
 
-if __name__ == '__main__':
-    N_ELEMENTS = int(3e8)
+if __name__ == 'main':
+    N_ELEMENTS = int(3e6)
     print(f"Tests for {N_ELEMENTS} elements arrays")
 
     # generate arrays on cpu
@@ -49,8 +49,10 @@ if __name__ == '__main__':
         n_threads_per_block = i * 128
         n_blocks = int(np.ceil(N_ELEMENTS / n_threads_per_block))
 
-        start = time.time_ns()
-        cuda_add_arrays[n_blocks, n_threads_per_block](d_A, d_B, d_C)
-        result = round((time.time_ns() - start) * 1e-9, 5)
-        print((n_threads_per_block, n_blocks, result))
+        m = 0
 
+        start = time.time_ns()
+        cuda_add_arrays[n_blocks, n_threads_per_block](d_A, d_B, d_C, m)
+        print(np.asarray(d_C), "yo")
+        result = round((time.time_ns() - start) * 1e-9, 5)
+        # print((n_threads_per_block, n_blocks, result))
