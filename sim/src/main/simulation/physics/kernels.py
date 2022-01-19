@@ -8,8 +8,8 @@ import math
 def density_kernel(
     result_density: ndarray,
     position: ndarray,
-    mass: float64,
-    inf_radius: float64
+    MASS: float64,
+    INF_R: float64
 ):
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
@@ -27,9 +27,9 @@ def density_kernel(
             + (position[i][2] - position[j][2]) ** 2
         )
         new_density += (
-            mass
-            * (315 / 64 * np.pi * inf_radius ** 9)
-            * (inf_radius ** 2 - dist_norm) ** 3
+            MASS
+            * (315 / 64 * np.pi * INF_R ** 9)
+            * (INF_R ** 2 - dist_norm) ** 3
         )
     result_density[i] = new_density
 
@@ -39,10 +39,10 @@ def pressure_kernel(
     result_pressure_term: ndarray,
     density: ndarray,
     position: ndarray,
-    mass: float64,
-    inf_radius: float64,
-    k_const: float64,
-    ro_0_const: float64,
+    MASS: float64,
+    INF_R: float64,
+    K: float64,
+    RHO_0: float64,
 ):
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
@@ -63,16 +63,16 @@ def pressure_kernel(
             + (position[i][2] - position[j][2]) ** 2
         )
         w_grad = (
-            (-45 / np.pi * inf_radius ** 6)
-            * (inf_radius - dist_norm ** 2)
+            (-45 / np.pi * INF_R ** 6)
+            * (INF_R - dist_norm ** 2)
             / dist_norm
         )
-        p_i = k_const * (density[i] - ro_0_const)
-        p_j = k_const * (density[j] - ro_0_const)
+        p_i = K * (density[i] - RHO_0)
+        p_j = K * (density[j] - RHO_0)
         for dim in range(3):
             new_pressure_term[dim] += (
                 dist[dim]
-                * mass
+                * MASS
                 * (p_i / density[i] ** 2 + p_j / density[j] ** 2)
                 * w_grad
             )
@@ -86,9 +86,9 @@ def viscosity_kernel(
     density: ndarray,
     position: ndarray,
     velocity: ndarray,
-    mass: float64,
-    inf_radius: float64,
-    viscosity_const: float64,
+    MASS: float64,
+    INF_R: float64,
+    VISC: float64,
 ):
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
@@ -110,14 +110,14 @@ def viscosity_kernel(
             + (position[i][1] - position[j][1]) ** 2
             + (position[i][2] - position[j][2]) ** 2
         )
-        w_laplacian = (45 / np.pi * inf_radius ** 6) * (inf_radius - dist_norm ** 2)
+        w_laplacian = (45 / np.pi * INF_R ** 6) * (INF_R - dist_norm ** 2)
         for dim in range(3):
             new_viscosity_term[dim] += (
-                mass * velocity_diff[dim] / density[j] * w_laplacian
+                MASS * velocity_diff[dim] / density[j] * w_laplacian
             )
     for dim in range(3):
         result_viscosity_term[i][dim] = (
-            viscosity_const * new_viscosity_term[dim] / density[i]
+            VISC * new_viscosity_term[dim] / density[i]
         )
 
 @cuda.jit
@@ -127,8 +127,8 @@ def integrating_kernel(
     external_force: ndarray,
     pressure_term: ndarray,
     viscosity_term: ndarray,
-    dt: float64,
-    mass: float64
+    DT: float64,
+    MASS: float64
 ):
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
@@ -145,66 +145,5 @@ def integrating_kernel(
             pressure_term[i][dim] +
             viscosity_term[i][dim]
             )
-        updated_velocity[i][dim] += result_force[dim] / mass * dt
-        updated_position[i][dim] += updated_velocity[i][dim] * dt
-
-if __name__ == "__main__":
-    N_ELEMENTS = int(4)
-    threads_per_grid = 128
-    grids_per_block = math.ceil(N_ELEMENTS / threads_per_grid)
-
-    MASS = 1e-5
-    K_CONST = 0.5
-    RO_0_CONST = 0.056
-    INF_RADIUS = 1e-4
-
-    dt = 1/60
-
-    external_force = np.random.random(3).astype("float64")
-
-    dens = np.zeros(N_ELEMENTS).astype("float64")
-    old_state = {
-        "position": (
-            np.random.random(3 * N_ELEMENTS)
-            .reshape((N_ELEMENTS, 3))
-            .astype("float64")
-        ),
-        "density": (
-            np.random.random(N_ELEMENTS)
-            .astype("float64")
-        ),
-        "velocity": (
-            np.random.random(3 * N_ELEMENTS)
-            .reshape((N_ELEMENTS, 3))
-            .astype("float64")
-        ),
-        "pressure_term": (
-            np.zeros(3 * N_ELEMENTS)
-            .reshape((N_ELEMENTS, 3))
-            .astype("float64")
-        ),
-        "viscosity_term": (
-            np.zeros(3 * N_ELEMENTS)
-            .reshape((N_ELEMENTS, 3))
-            .astype("float64")
-        )
-    }
-    
-    # send to gpu
-    d_density = cuda.to_device(old_state["density"])
-    d_position = cuda.to_device(old_state["position"])
-    d_velocity = cuda.to_device(old_state["velocity"])
-    d_pressure_term = cuda.to_device(old_state["pressure_term"])
-    d_viscosity_term = cuda.to_device(old_state["viscosity_term"])
-    d_external_force = cuda.to_device(external_force)
-
-    integrating_kernel[grids_per_block, threads_per_grid](
-    d_external_force,
-    d_pressure_term,
-    d_viscosity_term,
-    d_position,
-    d_velocity,
-    dt,
-    MASS)
-
-    print(d_position.copy_to_host())
+        updated_velocity[i][dim] += result_force[dim] / MASS * DT
+        updated_position[i][dim] += updated_velocity[i][dim] * DT

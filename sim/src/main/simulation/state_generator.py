@@ -1,10 +1,10 @@
 from __future__ import annotations
-from math import ceil
 from numpy import float64, int32, zeros
-from kernels import *
-from simulation_data import *
+from math import ceil
+from simulation.physics.constants import *
+from simulation.physics.kernels import *
+from simulation.simulation_data import *
 from numba import cuda
-from physics import *
 
 
 
@@ -74,6 +74,7 @@ class StateGenerator:
             d_new_viscosity_term, self.dt, MASS
         )
         cuda.synchronize()
+
 
         return SimulationState(
             d_position.copy_to_host(),
