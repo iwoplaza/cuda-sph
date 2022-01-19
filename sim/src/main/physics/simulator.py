@@ -1,51 +1,31 @@
-from __future__ import annotations
-from numpy import float64, int32, zeros
-from math import ceil
-from simulation.physics.constants import *
-from simulation.physics.kernels import *
-from simulation.simulation_data import *
 from numba import cuda
+from physics.kernels import *
+from physics.constants import *
+from simulation_data import SimulationState
+from numpy import zeros, float64, int32
+from math import ceil
 
 
+class Simulator:
+    def __init__(self, params) -> None:
+        self.params = params
+        self.dt = 1.0 / params.fps
 
-class StateGenerator:
-    def __init__(self, start_state: SimulationState, params: SimulationParameters) -> None:
-        self.current_state = start_state
-        self.current_frame_idx = -1
-        self.params = params 
-        self.dt = 1 / params.fps
-        self.n_frames = params.simulation_duration / self.dt
+    def compute_next_state(self, old_state) -> SimulationState:
+        self.__organize_voxels(old_state)
 
-    def __next__(self) -> SimulationState:
-        self.current_frame_idx += 1
-
-        if self.current_frame_idx == 0:
-            return self.current_state
-            
-        if self.current_frame_idx >= self.n_frames:
-            raise StopIteration
-
-        self.current_state = self.__compute_next_state()
-
-        return self.current_state
-
-    def __iter__(self) -> StateGenerator:
-        return self
+        return self.__compute_physics(old_state)
     
-    def __compute_next_state(self) -> SimulationState:
-        self.__organize_voxels()
-
-        self.__compute_physics()
-
-        return self.current_state
+    def __organize_voxels(self, old_state) -> None:
+        pass
     
-    def __compute_physics(self) -> None:
+    def __compute_physics(self, old_state) -> SimulationState:
         N: int = self.params.n_particles
 
         # send data to gpu
         # a) data to be updated or populated
-        d_position = cuda.to_device(self.current_state.position)
-        d_velocity = cuda.to_device(self.current_state.velocity)
+        d_position = cuda.to_device(old_state.position)
+        d_velocity = cuda.to_device(old_state.velocity)
         d_new_density = cuda.to_device(zeros(N, dtype=float64))
 
         # b) arrays to be used during computations
@@ -82,17 +62,9 @@ class StateGenerator:
         )
         cuda.synchronize()
 
-        self.current_state = SimulationState(
+        return SimulationState(
             d_position.copy_to_host(),
             d_velocity.copy_to_host(),
             d_new_density.copy_to_host(),
             zeros(N, dtype=int32)
         )
-    
-    def __organize_voxels(self) -> None:
-        # TODO: :)
-        pass
-
-
-
-    
