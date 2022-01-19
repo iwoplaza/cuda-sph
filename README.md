@@ -24,8 +24,10 @@ pip install -r ./requirements.txt
     - Zapis/odczyt danych o symulacji z pliku (Parametry symulacji, stan względny od czasu) [Paweł]
     - Definicja rurki: { origin: vec3, radius: float } [Paweł/Iwo]
 - Symulacja
-    - Szkietet programu [Maciej/Tomek]
-    - Kernele (przynajmniej zarys) [Maciej/Tomek]
+    - DONE Szkietet programu [Maciej/Tomek] 
+    - DONE Kernele (przynajmniej zarys) [Maciej/Tomek]
+    - Optymalizacja przeszukiwania n^2 za pomocą sąsiadów/voxeli
+    - podłazcenie do serializera (na razie korzysta ze swojego, mockowego)
 - Wizualizer [Iwo]
     - Szkielet projektu [Iwo]
     - Ruch kamery.
