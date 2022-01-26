@@ -29,7 +29,7 @@ def test(A, B, C):
     return True
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     N_ELEMENTS = int(3e6)
     print(f"Tests for {N_ELEMENTS} elements arrays")
 
