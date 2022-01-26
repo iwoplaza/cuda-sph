@@ -2,8 +2,8 @@ import unittest
 import shutil
 import numpy as np
 
-from common.results_managing.loader import Loader
-from common.results_managing.saver import Saver
+from common.serializer.loader import Loader
+from common.serializer.saver import Saver
 
 from sim.src.utils import Pipe, Segment, SimulationState, SimulationParameters
 
@@ -24,6 +24,7 @@ def get_simulation_parameters() -> SimulationParameters:
 
     return SimulationParameters(particle_mass, simulation_duration, fps, particles_number, particles_radius, pipe,
                                 influence_radius, space_dims, voxel_dim)
+
 
 class MyTestCase(unittest.TestCase):
     def test_settings_loading(self):

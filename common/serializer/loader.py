@@ -1,6 +1,6 @@
 import numpy as np
 import json
-import common.results_managing.constants as constants
+import common.serializer.constants as constants
 
 from sim.src.utils import SimulationState, SimulationParameters, Pipe, Segment
 

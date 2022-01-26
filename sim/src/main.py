@@ -1,17 +1,15 @@
 from __future__ import annotations
-from utils import SimulationState
+from utils import SimulationState, SimulationParameters
 from state_generator import StateGenerator
-
-
-class Serializer:
-    def serialize(self, state: SimulationState) -> None:
-        print(f"Serialized < {state} >")
+from common.serializer.saver import Saver
 
 
 def main():
-    serializer = Serializer()
-    for frame in StateGenerator(None):
-        serializer.serialize(frame)
+    simulation_state = SimulationState()
+    simulation_parameters = SimulationParameters()
+    saver = Saver("simulation_data", simulation_parameters)
+    for frame in StateGenerator(simulation_state, simulation_parameters):
+        saver.save_next_epoch(frame)
 
 
 if __name__ == '__main__':
