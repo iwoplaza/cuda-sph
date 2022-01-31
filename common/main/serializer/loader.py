@@ -1,8 +1,8 @@
 import numpy as np
 import json
-import common.serializer.constants as constants
+import common.main.serializer.constants as constants
 
-from sim.src.utils import SimulationState, SimulationParameters, Pipe, Segment
+from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters, Pipe, Segment
 
 
 class Loader:
@@ -27,20 +27,17 @@ class Loader:
         """
         return SimulationState(position=np.load(self.__folder_path + constants.POSITION_FILE % epoch),
                                velocity=np.load(self.__folder_path + constants.VELOCITY_FILE % epoch),
-                               pressure=np.load(self.__folder_path + constants.PRESSURE_FILE % epoch),
-                               density=None, voxels=None)
+                               density=np.load(self.__folder_path + constants.PRESSURE_FILE % epoch),
+                               voxels=None)
 
     def load_simulation_parameters(self) -> SimulationParameters:
         """
         :return: Loaded SimulationParameters
         """
         return SimulationParameters(fps=self.__json_object[constants.FPS],
-                                    influence_radius=self.__json_object[constants.INFLUENCE_RADIUS],
-                                    particle_mass=self.__json_object[constants.PARTICLE_MASS],
                                     space_dims=tuple(self.__json_object[constants.SPACE_DIMS]),
                                     voxel_dim=tuple(self.__json_object[constants.VOXEL_DIM]),
-                                    particles_number=self.__json_object[constants.PARTICLES_NUMBER],
-                                    particles_radius=self.__json_object[constants.PARTICLES_RADIUS],
+                                    n_particles=self.__json_object[constants.PARTICLES_NUMBER],
                                     simulation_duration=self.__json_object[constants.SIMULATION_DURATION],
                                     pipe=self.__load_pipe())
 

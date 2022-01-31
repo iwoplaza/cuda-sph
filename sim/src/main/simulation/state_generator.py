@@ -1,11 +1,10 @@
 from __future__ import annotations
-from numpy import float64, int32, zeros
+from numpy import int32, zeros
 from math import ceil
-from simulation.physics.constants import *
-from simulation.physics.kernels import *
-from simulation.simulation_data import *
+from sim.src.main.simulation.physics.constants import *
+from sim.src.main.simulation.physics.kernels import *
+from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
 from numba import cuda
-
 
 
 class StateGenerator:

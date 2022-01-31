@@ -2,10 +2,10 @@ import unittest
 import shutil
 import numpy as np
 
-from common.serializer.loader import Loader
-from common.serializer.saver import Saver
+from common.main.serializer.loader import Loader
+from common.main.serializer.saver import Saver
 
-from sim.src.utils import Pipe, Segment, SimulationState, SimulationParameters
+from common.main.data_classes.simulation_data_classes import Pipe, Segment, SimulationState, SimulationParameters
 
 
 def get_simulation_parameters() -> SimulationParameters:
@@ -67,8 +67,8 @@ class MyTestCase(unittest.TestCase):
                                        np.random.rand(1, 1))
 
         saver = Saver(path, parameters)
-        saver.save_next_epoch(first_state)
-        saver.save_next_epoch(second_state)
+        saver.save_next_state(first_state)
+        saver.save_next_state(second_state)
 
         loader = Loader(path)
 

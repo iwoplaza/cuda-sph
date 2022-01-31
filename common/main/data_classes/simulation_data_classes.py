@@ -53,5 +53,4 @@ def get_default_sim_parameters() -> SimulationParameters:
         pipe=Pipe(segments=None),
         space_dims=(1, 1, 1),
         voxel_dim=(1e-4, 1e-4, 1e-4)
-    ) 
-    
+    )

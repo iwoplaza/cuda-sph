@@ -1,4 +1,4 @@
-from simulation.simulation_data import SimulationState
+from common.main.data_classes.simulation_data_classes import SimulationState
 
 
 class Serializer:

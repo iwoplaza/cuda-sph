@@ -2,21 +2,17 @@ import numpy as np
 import json
 import os
 
-import common.serializer.constants as constants
-from sim.src.utils import SimulationState, SimulationParameters
+import common.main.serializer.constants as constants
+from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
 
 
 def prepare_json(simulation_parameters: SimulationParameters):
-    json_object = {constants.PARTICLE_MASS: simulation_parameters.particle_mass,
-                   constants.SIMULATION_DURATION: simulation_parameters.simulation_duration,
+    json_object = {constants.SIMULATION_DURATION: simulation_parameters.simulation_duration,
                    constants.FPS: simulation_parameters.fps,
-                   constants.PARTICLES_NUMBER: simulation_parameters.particles_number,
-                   constants.PARTICLES_RADIUS: simulation_parameters.particles_radius,
-                   constants.INFLUENCE_RADIUS: simulation_parameters.influence_radius,
+                   constants.PARTICLES_NUMBER: simulation_parameters.n_particles,
                    constants.SPACE_DIMS: simulation_parameters.space_dims,
                    constants.VOXEL_DIM: simulation_parameters.voxel_dim,
-                   constants.PIPE: [[segment.end_point, segment.radius] for segment in
-                                    simulation_parameters.pipe.segments]}
+                   constants.PIPE: None}
     return json_object
 
 
@@ -45,7 +41,7 @@ class Saver:
 
         self.__current_epoch = 0
 
-    def save_next_epoch(self, simulation_state: SimulationState) -> None:
+    def save_next_state(self, simulation_state: SimulationState) -> None:
         """
         Saves epoch_state and increment internal epoch counter - use only once per epoch
 
@@ -53,5 +49,5 @@ class Saver:
         """
         np.save(self.__folder_path + constants.POSITION_FILE % self.__current_epoch, simulation_state.position)
         np.save(self.__folder_path + constants.VELOCITY_FILE % self.__current_epoch, simulation_state.velocity)
-        np.save(self.__folder_path + constants.PRESSURE_FILE % self.__current_epoch, simulation_state.pressure)
+        np.save(self.__folder_path + constants.PRESSURE_FILE % self.__current_epoch, simulation_state.density)
         self.__current_epoch = self.__current_epoch + 1
