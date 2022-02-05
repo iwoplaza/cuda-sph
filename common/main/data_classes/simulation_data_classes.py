@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from numpy import int32, ndarray, asarray, float64, zeros
 import numpy as np
 from typing import Tuple, List
-from physics.constants import INF_R
+from sim.src.main.physics.constants import INF_R
 
 
 @dataclass
@@ -60,8 +60,6 @@ def get_default_sim_parameters() -> SimulationParameters:
         simulation_duration=1,
         fps=30,
         pipe=Pipe(segments=None),
-        voxel_size=voxel_size,
-        voxel_count=voxel_count,
-        space_size=space_size
-    ) 
-    
+        space_dims=(1, 1, 1),
+        voxel_dim=(1e-4, 1e-4, 1e-4)
+    )

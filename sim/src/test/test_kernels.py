@@ -1,7 +1,7 @@
 import pytest 
-from test import BLOCK_SIZE, N_ELEMENTS, N_BLOCKS
+from . import BLOCK_SIZE, N_ELEMENTS, N_BLOCKS
 import numpy as np
-from src.kernels import density_kernel, pressure_kernel, viscosity_kernel
+from sim.src.main.simulation.physics.kernels import density_kernel, pressure_kernel, viscosity_kernel
 from numba import cuda 
 
 

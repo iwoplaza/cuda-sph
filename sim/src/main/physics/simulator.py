@@ -1,9 +1,9 @@
-from numpy import zeros, int32
+from numpy import zeros, int32, float64
 from math import ceil
-
-from sim.src.main.physics.constants import *
-from sim.src.main.physics.kernels import *
-from sim.src.main.simulation_data import SimulationState
+from numba import cuda
+from common.main.data_classes.simulation_data_classes import SimulationState
+import sim.src.main.physics.constants as constants
+import sim.src.main.physics.kernels as kernels
 
 
 class Simulator:
@@ -37,25 +37,25 @@ class Simulator:
         grids_per_block: int = ceil(self.params.n_particles / threads_per_grid)
 
         # run kernels
-        density_kernel[grids_per_block, threads_per_grid](
-            d_new_density, d_position, MASS, INF_R
+        kernels.density_kernel[grids_per_block, threads_per_grid](
+            d_new_density, d_position, constants.MASS, constants.INF_R
         )
         cuda.synchronize()
 
-        pressure_kernel[grids_per_block, threads_per_grid](
+        kernels.pressure_kernel[grids_per_block, threads_per_grid](
             d_new_pressure_term, d_new_density, d_position,
-            MASS, INF_R, K, RHO_0
+            constants.MASS, constants.INF_R, constants.K, constants.RHO_0
         )
 
-        viscosity_kernel[grids_per_block, threads_per_grid](
+        kernels.viscosity_kernel[grids_per_block, threads_per_grid](
             d_new_viscosity_term, d_new_density, d_position, d_velocity,
-            MASS, INF_R, VISC
+            constants.MASS, constants.INF_R, constants.VISC
         )
         cuda.synchronize()
 
-        integrating_kernel[grids_per_block, threads_per_grid](
+        kernels.integrating_kernel[grids_per_block, threads_per_grid](
             d_position, d_velocity, d_external_force, d_new_pressure_term,
-            d_new_viscosity_term, self.dt, MASS
+            d_new_viscosity_term, self.dt, constants.MASS
         )
         cuda.synchronize()
 

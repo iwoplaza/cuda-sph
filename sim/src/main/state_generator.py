@@ -19,17 +19,13 @@ class StateGenerator:
         if self.current_frame_idx >= self.n_frames:
             raise StopIteration
 
-        self.current_state = self.__compute_next_state()
+        self.current_state = self.simulator.compute_next_state(self.current_state)
 
         return self.current_state
 
     def __iter__(self) -> StateGenerator:
         return self
-    
-    def __compute_next_state(self) -> SimulationState:
-        self.current_state = self.simulator.compute_next_state(self.current_state)
 
-        return self.current_state
 
 
 
