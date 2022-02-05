@@ -17,6 +17,7 @@ def density_kernel(
     i = block_width * block_idx + th_idx
     if i >= result_density.shape[0]:
         return
+    
     new_density = 0
     for j in range(result_density.shape[0]):
         if j == i:
@@ -95,7 +96,7 @@ def viscosity_kernel(
     block_width = cuda.blockDim.x
     i = block_width * block_idx + th_idx
     if i >= density.shape[0]:
-        return 
+        return
     new_viscosity_term = cuda.local.array(3, np.double)
     for j in range(density.shape[0]):
         if j == i:
