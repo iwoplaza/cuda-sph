@@ -1,9 +1,9 @@
-from numba import cuda
-from physics.kernels import *
-from physics.constants import *
-from simulation_data import SimulationState
-from numpy import zeros, float64, int32
+from numpy import zeros, int32
 from math import ceil
+
+from sim.src.main.physics.constants import *
+from sim.src.main.physics.kernels import *
+from sim.src.main.simulation_data import SimulationState
 
 
 class Simulator:
@@ -67,5 +67,4 @@ class Simulator:
         )
 
     def __organize_voxels(self, old_state) -> None:
-        
         pass
