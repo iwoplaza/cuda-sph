@@ -3,6 +3,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from src.main.abstract import Window
 from .shader import Shader
+from .common_shaders import CommonShaders
 
 
 class GLWindow(Window):
@@ -18,7 +19,10 @@ class GLWindow(Window):
         glutInitWindowPosition(0, 0)  # Set the position at which this windows should appear
         wind = glutCreateWindow(self.title)  # Give your window a title
 
-        self.__shaders = []
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        self.__shaders = CommonShaders.register_common_shaders()
         self.proj_mat = None
 
         self.__setup_projection()

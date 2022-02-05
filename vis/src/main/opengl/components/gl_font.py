@@ -7,36 +7,15 @@ import math
 import glm
 from src.main.abstract.components import Font
 from src.main.color import Color
-from ..shader import Shader
-
-
-class FontShader(Shader):
-    def __init__(self):
-        with open('assets/text_shader.vert') as f:
-            text_shader_vert = f.read()
-
-        with open('assets/text_shader.frag') as f:
-            text_shader_frag = f.read()
-
-        super().__init__(text_shader_vert, text_shader_frag)
-
-    def set_projection_matrix(self, mat):
-        glUniformMatrix4fv(1, 1, GL_FALSE, glm.value_ptr(mat))
-
-
-font_shader = None
+from src.main.opengl.common_shaders import CommonShaders
 
 
 class GLFont(Font):
     def __init__(self, font_path: str, font_size: int = 48):
         # Setting up the shared font shader
-        global font_shader
-        if font_shader is None:
-            font_shader = FontShader()
-
         super().__init__(font_size)
 
-        self.shader = font_shader
+        self.shader = CommonShaders.FONT
         self.base, self.texid = 0, 0
         self.characters = []
 
@@ -128,3 +107,12 @@ class GLFont(Font):
 
         glBindVertexArray(0)
         glBindTexture(GL_TEXTURE_2D, 0)
+
+    def estimate_width(self, text: str):
+        char_x = 0
+        for c in text:
+            c = ord(c)
+            ch = self.characters[c]
+            char_x += (ch[3] >> 6)
+
+        return char_x

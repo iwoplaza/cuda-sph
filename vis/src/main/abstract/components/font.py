@@ -7,7 +7,7 @@ class Font:
         self.font_size = font_size
 
     def use(self):
-        pass
+        raise NotImplementedError()
 
     def draw_text(self,
                   text: str,
@@ -16,4 +16,7 @@ class Font:
                   scale: float = 1,
                   direction: Tuple[float, float] = (1, 0)
                   ):
-        pass
+        raise NotImplementedError()
+
+    def estimate_width(self, text: str):
+        raise NotImplementedError()
