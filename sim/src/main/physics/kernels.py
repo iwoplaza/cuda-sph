@@ -3,6 +3,13 @@ from numba import cuda
 import numpy as np
 import math
 
+@cuda.jit(device=True)
+def get_index(n_particles):
+    th_idx = cuda.threadIdx.x
+    block_idx = cuda.blockIdx.x
+    block_width = cuda.blockDim.x
+    return block_width * block_idx + th_idx
+
 
 @cuda.jit
 def density_kernel(
@@ -11,11 +18,8 @@ def density_kernel(
     MASS: float64,
     INF_R: float64
 ):
-    th_idx = cuda.threadIdx.x
-    block_idx = cuda.blockIdx.x
-    block_width = cuda.blockDim.x
-    i = block_width * block_idx + th_idx
-    if i >= result_density.shape[0]:
+    i = get_index()
+    if i >= position.shape[0]:
         return
     
     new_density = 0
@@ -45,12 +49,10 @@ def pressure_kernel(
     K: float64,
     RHO_0: float64,
 ):
-    th_idx = cuda.threadIdx.x
-    block_idx = cuda.blockIdx.x
-    block_width = cuda.blockDim.x
-    i = block_width * block_idx + th_idx
-    if i >= density.shape[0]:
-        return 
+    i = get_index()
+    if i >= position.shape[0]:
+        return
+     
     new_pressure_term = cuda.local.array(3, np.double)
     for j in range(density.shape[0]):
         if j == i:
@@ -91,12 +93,10 @@ def viscosity_kernel(
     INF_R: float64,
     VISC: float64,
 ):
-    th_idx = cuda.threadIdx.x
-    block_idx = cuda.blockIdx.x
-    block_width = cuda.blockDim.x
-    i = block_width * block_idx + th_idx
-    if i >= density.shape[0]:
+    i = get_index()
+    if i >= position.shape[0]:
         return
+    
     new_viscosity_term = cuda.local.array(3, np.double)
     for j in range(density.shape[0]):
         if j == i:
@@ -131,10 +131,7 @@ def integrating_kernel(
     DT: float64,
     MASS: float64
 ):
-    th_idx = cuda.threadIdx.x
-    block_idx = cuda.blockIdx.x
-    block_width = cuda.blockDim.x
-    i = block_width * block_idx + th_idx
+    i = get_index()
     if i >= updated_position.shape[0]:
         return
     
