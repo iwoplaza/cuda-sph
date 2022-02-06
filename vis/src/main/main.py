@@ -6,9 +6,9 @@
 # - Mediator (UI)
 
 
-from src.main.opengl import GLWindow
-from src.main.opengl import GLComponentFactory
-from src.main.screen import VisualScreen
+from vis.src.main.opengl import GLWindow
+from vis.src.main.opengl import GLComponentFactory
+from vis.src.main.screen import VisualScreen
 
 
 if __name__ == '__main__':

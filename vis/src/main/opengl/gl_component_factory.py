@@ -1,5 +1,5 @@
 from typing import Tuple
-from src.main.abstract.components import Font, ComponentFactory
+from vis.src.main.abstract.components import Font, ComponentFactory
 from .components import GLFont, GLButton
 from .gl_window import GLWindow
 

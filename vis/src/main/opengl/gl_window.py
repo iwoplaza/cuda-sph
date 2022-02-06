@@ -1,7 +1,7 @@
 import glm
 from OpenGL.GL import *
 from OpenGL.GLUT import *
-from src.main.abstract import Window
+from vis.src.main.abstract import Window
 from .shader import Shader
 from .common_shaders import CommonShaders
 
@@ -32,10 +32,17 @@ class GLWindow(Window):
         self.__update_shader_uniforms(shader)
 
     def __setup_projection(self):
+        glViewport(0, 0, self.width, self.height)
         self.proj_mat = glm.ortho(0, self.width, self.height, 0, -1, 1)
 
         for shader in self.__shaders:
             self.__update_shader_uniforms(shader)
+
+    def __on_resize(self, w, h):
+        self.width = w
+        self.height = h
+
+        self.__setup_projection()
 
     def __update_shader_uniforms(self, shader):
         shader.use()
@@ -46,12 +53,10 @@ class GLWindow(Window):
 
         super().draw_current_screen()
 
-        # proj = glm.ortho(0, 500, 500, 0, -1, 1)
-        # glUniformMatrix4fv(1, 1, GL_FALSE, glm.value_ptr(proj))
-
         glutSwapBuffers()
 
     def run(self):
         glutDisplayFunc(self.__display_func)  # Tell OpenGL to call the showScreen method continuously
         glutIdleFunc(self.__display_func)  # Draw any graphics or shapes in the showScreen function at all times
+        glutReshapeFunc(self.__on_resize)
         glutMainLoop()  # Keeps the window created above displaying/running in a loop

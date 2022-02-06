@@ -1,5 +1,5 @@
-from src.main.abstract import UIScreen
-from src.main.abstract.components import ComponentFactory
+from vis.src.main.abstract import UIScreen
+from vis.src.main.abstract.components import ComponentFactory
 
 
 class VisualScreen(UIScreen):
