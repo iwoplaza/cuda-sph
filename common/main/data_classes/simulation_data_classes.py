@@ -3,15 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from numpy import ndarray, asarray, float64, random, zeros
 import numpy as np
-import json
 from typing import Tuple, List
 
 
 @dataclass
 class Segment:
-    end_point: Tuple[float, float, float] = (10, 20, 30)
-    radius: float = 1
-    prev_segment: Segment = None
+    start_point: Tuple[float, float, float] = (0, 0, 0)
+    start_radius: float = 1
+    end_radius: float = 1
+    length: float = 1
 
 
 @dataclass
