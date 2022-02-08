@@ -1,5 +1,5 @@
 
 
-class UIScreen:
+class Layer:
     def draw(self):
         raise NotImplementedError()

@@ -1,8 +1,8 @@
 from typing import Tuple
 from OpenGL.GL import *
 import glm
-from vis.src.main.abstract.components import Button
-from vis.src.main.abstract.components import Font
+from vis.src.main.abstract.ui_components import Button
+from vis.src.main.abstract.ui_components import Font
 from vis.src.main.opengl.common_shaders import CommonShaders
 from ..mesh import make_rectangle_mesh
 

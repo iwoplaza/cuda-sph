@@ -1,13 +1,15 @@
 import glm
 from OpenGL.GL import *
 from OpenGL.GLUT import *
+
 from vis.src.main.abstract import Window
-from .shader import Shader
 from .common_shaders import CommonShaders
+from .shader import Shader
 
 
 class GLWindow(Window):
-    __shaders: list[Shader]
+    __ui_shaders: list[Shader]
+    __scene_shaders: list[Shader]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -22,21 +24,20 @@ class GLWindow(Window):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        self.__shaders = CommonShaders.register_common_shaders()
-        self.proj_mat = None
+        self.__ui_shaders = CommonShaders.register_ui_shaders()
+        self.__scene_shaders = CommonShaders.register_scene_shaders()
+        self.ui_proj_mat = None
+        self.scene_proj_mat = None
 
         self.__setup_projection()
 
-    def register_shader(self, shader: Shader):
-        self.__shaders.append(shader)
-        self.__update_shader_uniforms(shader)
-
     def __setup_projection(self):
         glViewport(0, 0, self.width, self.height)
-        self.proj_mat = glm.ortho(0, self.width, self.height, 0, -1, 1)
+        self.ui_proj_mat = glm.ortho(0, self.width, self.height, 0, -1, 1)
+        self.scene_proj_mat = glm.perspective(60.0, self.width / self.height, 0.01, 1000)
 
-        for shader in self.__shaders:
-            self.__update_shader_uniforms(shader)
+        for shader in self.__ui_shaders:
+            self.__update_ui_shader_uniforms(shader)
 
     def __on_resize(self, w, h):
         self.width = w
@@ -44,14 +45,19 @@ class GLWindow(Window):
 
         self.__setup_projection()
 
-    def __update_shader_uniforms(self, shader):
+    def __update_ui_shader_uniforms(self, shader):
         shader.use()
-        shader.set_projection_matrix(self.proj_mat)
+        shader.set_projection_matrix(self.ui_proj_mat)
+
+    def __update_scene_shader_uniforms(self, shader):
+        shader.use()
+        shader.set_projection_matrix(self.scene_proj_mat)
 
     def __display_func(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        super().draw_current_screen()
+        for layer in self.layers:
+            layer.draw()
 
         glutSwapBuffers()
 

@@ -1,10 +1,11 @@
 from typing import Tuple
-from vis.src.main.abstract.components import Font, ComponentFactory
-from .components import GLFont, GLButton
+from vis.src.main.abstract import UIComponentFactory
+from vis.src.main.abstract.ui_components import Font
+from .ui_components import GLFont, GLButton
 from .gl_window import GLWindow
 
 
-class GLComponentFactory(ComponentFactory):
+class GLUIComponentFactory(UIComponentFactory):
     window: GLWindow
 
     def __init__(self, window: GLWindow):
