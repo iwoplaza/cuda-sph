@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 import numpy as np
 import json
 import os
@@ -10,8 +12,8 @@ def prepare_json(simulation_parameters: SimulationParameters):
     json_object = {constants.SIMULATION_DURATION: simulation_parameters.simulation_duration,
                    constants.FPS: simulation_parameters.fps,
                    constants.PARTICLES_NUMBER: simulation_parameters.n_particles,
-                   constants.SPACE_DIMS: simulation_parameters.space_dims,
-                   constants.VOXEL_DIM: simulation_parameters.voxel_dim,
+                   constants.SPACE_DIMS: simulation_parameters.space_size,
+                   constants.VOXEL_DIM: simulation_parameters.voxel_size,
                    constants.PIPE: None}
     return json_object
 

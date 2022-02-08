@@ -1,8 +1,13 @@
 import pytest
 import numpy as np
 from numba import cuda
-import sim.src.main.physics.kernels as kernels
 from math import ceil
+
+from sim.src.main.physics import kernels, constants
+
+
+# TODO: signatures of kernels has been changed. tests has to be updated
+
 
 N_ELEMENTS = 1000
 BLOCK_SIZE: int = 64
@@ -11,43 +16,43 @@ N_BLOCKS: int = ceil(N_ELEMENTS / BLOCK_SIZE)
 
 @pytest.fixture 
 def position_random():
-    return np.random.random((N_ELEMENTS, 3)).astype(np.double)
+    return np.random.random((N_ELEMENTS, 3)).astype(np.float64)
 
 
 @pytest.fixture 
 def velocity_random():
-    return np.random.random((N_ELEMENTS, 3)).astype(np.double)
+    return np.random.random((N_ELEMENTS, 3)).astype(np.float64)
 
 
 @pytest.fixture 
 def pressure_term_random():
-    return np.random.random((N_ELEMENTS, 3)).astype(np.double)
+    return np.random.random((N_ELEMENTS, 3)).astype(np.float64)
 
 
 @pytest.fixture 
 def viscosity_term_random():
-    return np.random.random((N_ELEMENTS, 3)).astype(np.double)
+    return np.random.random((N_ELEMENTS, 3)).astype(np.float64)
 
 
 @pytest.fixture 
 def density_random():
-    return np.random.random(N_ELEMENTS).astype(np.double)
+    return np.random.random(N_ELEMENTS).astype(np.float64)
 
 
 @pytest.fixture 
 def viscosity_random():
-    return np.random.random(N_ELEMENTS).astype(np.double)
+    return np.random.random(N_ELEMENTS).astype(np.float64)
 
 
 @pytest.fixture 
 def density_random():
-    return np.random.random(N_ELEMENTS).astype(np.double)
+    return np.random.random(N_ELEMENTS).astype(np.float64)
 
 
 @pytest.mark.parametrize("mass", [1e-5, 1e-10, 1, 10])
 def test_density_kernel_update_array(position_random, mass):
     d_position = cuda.to_device(position_random)
-    d_density = cuda.to_device(np.zeros(N_ELEMENTS, dtype=np.double))
+    d_density = cuda.to_device(np.zeros(N_ELEMENTS, dtype=np.float64))
     kernels.density_kernel[N_BLOCKS, BLOCK_SIZE](d_density, d_position, mass, 0.1)
     h_density = d_density.copy_to_host()
     h_position = d_position.copy_to_host()
@@ -75,7 +80,8 @@ def test_viscosity_kernel_update_array(density_random, position_random, velocity
     d_density = cuda.to_device(density_random)
     d_velocity = cuda.to_device(velocity_random)
     d_viscosity = cuda.to_device(np.random.random((N_ELEMENTS, 3)))
-    kernels.viscosity_kernel[N_BLOCKS, BLOCK_SIZE](d_density, d_position, d_velocity, d_viscosity, mass, 0.1, 0.056)
+    kernels.viscosity_kernel[N_BLOCKS, BLOCK_SIZE](d_viscosity, d_density, d_position, d_velocity, constants.MASS,
+                                                   constants.INF_R, constants.VISC)
     h_viscosity= d_viscosity.copy_to_host()
     h_position = d_position.copy_to_host()
     h_density = d_density.copy_to_host()

@@ -43,7 +43,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(loaded_parameters.particles_radius, parameters.particles_radius)
         self.assertEqual(loaded_parameters.pipe, parameters.pipe)
         self.assertEqual(loaded_parameters.influence_radius, parameters.influence_radius)
-        self.assertEqual(loaded_parameters.space_dims, parameters.space_dims)
+        self.assertEqual(loaded_parameters.space_size, parameters.space_size)
         self.assertEqual(loaded_parameters.voxel_dim, parameters.voxel_dim)
 
         shutil.rmtree(path)

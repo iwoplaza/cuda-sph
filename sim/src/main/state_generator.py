@@ -1,6 +1,7 @@
 from __future__ import annotations
+
+from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
 from physics.simulator import Simulator
-from simulation_data import SimulationParameters, SimulationState
 
 
 class StateGenerator:
@@ -25,8 +26,3 @@ class StateGenerator:
 
     def __iter__(self) -> StateGenerator:
         return self
-
-
-
-
-    

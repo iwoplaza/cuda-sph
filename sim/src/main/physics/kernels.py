@@ -1,10 +1,11 @@
-from numpy import float64, ndarray
+from numpy import float64, ndarray, int32
 from numba import cuda
 import numpy as np
 import math
 
+
 @cuda.jit(device=True)
-def get_index(n_particles):
+def get_index():
     th_idx = cuda.threadIdx.x
     block_idx = cuda.blockIdx.x
     block_width = cuda.blockDim.x
@@ -13,46 +14,46 @@ def get_index(n_particles):
 
 @cuda.jit
 def density_kernel(
-    result_density: ndarray,
-    position: ndarray,
-    MASS: float64,
-    INF_R: float64
+        result_density: ndarray,
+        position: ndarray,
+        MASS: float64,
+        INF_R: float64
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
-    
+
     new_density = 0
     for j in range(result_density.shape[0]):
         if j == i:
             continue
         dist_norm = (
-            (position[i][0] - position[j][0]) ** 2
-            + (position[i][1] - position[j][1]) ** 2
-            + (position[i][2] - position[j][2]) ** 2
+                (position[i][0] - position[j][0]) ** 2
+                + (position[i][1] - position[j][1]) ** 2
+                + (position[i][2] - position[j][2]) ** 2
         )
         new_density += (
-            MASS
-            * (315 / 64 * np.pi * INF_R ** 9)
-            * (INF_R ** 2 - dist_norm) ** 3
+                MASS
+                * (315 / 64 * np.pi * INF_R ** 9)
+                * (INF_R ** 2 - dist_norm) ** 3
         )
     result_density[i] = new_density
 
 
 @cuda.jit
 def pressure_kernel(
-    result_pressure_term: ndarray,
-    density: ndarray,
-    position: ndarray,
-    MASS: float64,
-    INF_R: float64,
-    K: float64,
-    RHO_0: float64,
+        result_pressure_term: ndarray,
+        density: ndarray,
+        position: ndarray,
+        MASS: float64,
+        INF_R: float64,
+        K: float64,
+        RHO_0: float64,
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
-     
+
     new_pressure_term = cuda.local.array(3, np.double)
     for j in range(density.shape[0]):
         if j == i:
@@ -66,18 +67,18 @@ def pressure_kernel(
             + (position[i][2] - position[j][2]) ** 2
         )
         w_grad = (
-            (-45 / np.pi * INF_R ** 6)
-            * (INF_R - dist_norm ** 2)
-            / dist_norm
+                (-45 / np.pi * INF_R ** 6)
+                * (INF_R - dist_norm ** 2)
+                / dist_norm
         )
         p_i = K * (density[i] - RHO_0)
         p_j = K * (density[j] - RHO_0)
         for dim in range(3):
             new_pressure_term[dim] += (
-                dist[dim]
-                * MASS
-                * (p_i / density[i] ** 2 + p_j / density[j] ** 2)
-                * w_grad
+                    dist[dim]
+                    * MASS
+                    * (p_i / density[i] ** 2 + p_j / density[j] ** 2)
+                    * w_grad
             )
     for dim in range(3):
         result_pressure_term[i][dim] = new_pressure_term[dim]
@@ -85,18 +86,18 @@ def pressure_kernel(
 
 @cuda.jit
 def viscosity_kernel(
-    result_viscosity_term: ndarray,
-    density: ndarray,
-    position: ndarray,
-    velocity: ndarray,
-    MASS: float64,
-    INF_R: float64,
-    VISC: float64,
+        result_viscosity_term: ndarray,
+        density: ndarray,
+        position: ndarray,
+        velocity: ndarray,
+        MASS: float64,
+        INF_R: float64,
+        VISC: float64,
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
-    
+
     new_viscosity_term = cuda.local.array(3, np.double)
     for j in range(density.shape[0]):
         if j == i:
@@ -114,34 +115,56 @@ def viscosity_kernel(
         w_laplacian = (45 / np.pi * INF_R ** 6) * (INF_R - dist_norm ** 2)
         for dim in range(3):
             new_viscosity_term[dim] += (
-                MASS * velocity_diff[dim] / density[j] * w_laplacian
+                    MASS * velocity_diff[dim] / density[j] * w_laplacian
             )
     for dim in range(3):
         result_viscosity_term[i][dim] = (
-            VISC * new_viscosity_term[dim] / density[i]
+                VISC * new_viscosity_term[dim] / density[i]
         )
+
 
 @cuda.jit
 def integrating_kernel(
-    updated_position: ndarray,
-    updated_velocity: ndarray,
-    external_force: ndarray,
-    pressure_term: ndarray,
-    viscosity_term: ndarray,
-    DT: float64,
-    MASS: float64
+        updated_position: ndarray,
+        updated_velocity: ndarray,
+        external_force: ndarray,
+        pressure_term: ndarray,
+        viscosity_term: ndarray,
+        DT: float64,
+        MASS: float64
 ):
     i = get_index()
     if i >= updated_position.shape[0]:
         return
-    
+
     # perform numerical integration with 'dt' timestep (in seconds)
-    result_force = cuda.local.array(3, np.float64)
+    result_force = cuda.local.array(3, float64)
     for dim in range(3):
         result_force[dim] = (
-            external_force[dim] +
-            pressure_term[i][dim] +
-            viscosity_term[i][dim]
-            )
+                external_force[dim] +
+                pressure_term[i][dim] +
+                viscosity_term[i][dim]
+        )
         updated_velocity[i][dim] += result_force[dim] / MASS * DT
         updated_position[i][dim] += updated_velocity[i][dim] * DT
+
+
+@cuda.jit
+def assign_voxels_to_particles_kernel(
+        voxels: ndarray,
+        position: ndarray,
+        voxel_size: ndarray,
+        space_dim: ndarray
+):
+    i = get_index()
+    if i >= position.shape[0]:
+        return
+
+    # compute 3d index of a voxel
+    voxel = cuda.local.array(3, int32)
+    for dim in range(3):
+        voxel[dim] = int32(position[i][dim] / voxel_size[dim])
+
+    # compute 1d index of a voxel and return
+    # idx = x + y*w + z*w*d
+    voxels[i] = voxel[0] + voxel[1] * space_dim[1] + voxel[2] * space_dim[1] * space_dim[2]

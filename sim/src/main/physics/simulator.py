@@ -1,14 +1,15 @@
+import numpy as np
 from numpy import zeros, int32, float64
 from math import ceil
 from numba import cuda
-from common.main.data_classes.simulation_data_classes import SimulationState
+from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
 import sim.src.main.physics.constants as constants
 import sim.src.main.physics.kernels as kernels
 
 
 class Simulator:
     def __init__(self, params) -> None:
-        self.params = params
+        self.params: SimulationParameters = params
         self.dt = 1.0 / params.fps
 
     def compute_next_state(self, old_state) -> SimulationState:
@@ -29,7 +30,6 @@ class Simulator:
         d_new_pressure_term = cuda.to_device(zeros((N, 3), dtype=float64))
         d_new_viscosity_term = cuda.to_device(zeros((N, 3), dtype=float64))
         d_new_density = cuda.to_device(zeros(N, dtype=float64))
-
 
         # compute block size and grid size
         # TODO: compute it using gpu detection for optimization
@@ -66,6 +66,29 @@ class Simulator:
             zeros(N, dtype=int32)
         )
 
-    def __organize_voxels(self, old_state) -> None:
-        # :)
-        pass
+    def __organize_voxels(self, state: SimulationState) -> None:
+        N: int = self.params.n_particles
+
+        threads_per_grid: int = 64
+        grids_per_block: int = ceil(self.params.n_particles / threads_per_grid)
+
+        # assign voxel indices to particles
+        space_size = self.params.space_size
+        voxel_size = self.params.voxel_size
+        space_dims = cuda.to_device(np.asarray([space_size[0] / voxel_size[0],
+                                                space_size[1] / voxel_size[1],
+                                                space_size[2] / voxel_size[2]], dtype=int32))
+        d_position = cuda.to_device(state.position)
+        d_new_voxels = cuda.to_device(zeros(N, dtype=int32)) # new buffer for voxel indices
+        kernels.assign_voxels_to_particles_kernel[threads_per_grid, grids_per_block]\
+            (d_new_voxels, d_position, np.asarray(self.params.voxel_size, float64), space_dims)
+        state.voxel = d_new_voxels.copy_to_host()
+
+        # create and sort (voxel_idx, particles_id) list
+        voxel_map = np.asarray([(state.voxel[i], i) for i in range(N)],
+                               dtype=[('voxel_id', int32), ('particle_id', int32)])
+        voxel_map.sort(order='voxel_id')
+
+        # create and populate voxel_begin and voxel_end arrays
+
+        return
