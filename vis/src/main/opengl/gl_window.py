@@ -34,10 +34,13 @@ class GLWindow(Window):
     def __setup_projection(self):
         glViewport(0, 0, self.width, self.height)
         self.ui_proj_mat = glm.ortho(0, self.width, self.height, 0, -1, 1)
-        self.scene_proj_mat = glm.perspective(60.0, self.width / self.height, 0.01, 1000)
+        self.scene_proj_mat = glm.perspective(90.0, self.width / self.height, 0.01, 1000)
 
         for shader in self.__ui_shaders:
             self.__update_ui_shader_uniforms(shader)
+
+        for shader in self.__scene_shaders:
+            self.__update_scene_shader_uniforms(shader)
 
     def __on_resize(self, w, h):
         self.width = w

@@ -15,13 +15,22 @@ class GLCube(Cube):
 
         vertex_attributes = np.array([
             # x y z
-            0, 0, 0,
-            1, 0, 0,
-            0, 1, 0,
 
-            0, 1, 0,
-            1, 0, 0,
-            1, 1, 0,
+            # Back
+            -1, 1, -1,
+            1, 1, -1,
+            -1, -1, -1,
+            -1, -1, -1,
+            1, 1, -1,
+            1, -1, -1,
+
+            # Front
+            -1, 1, 1,
+            1, 1, 1,
+            -1, -1, 1,
+            -1, -1, 1,
+            1, 1, 1,
+            1, -1, 1,
         ], dtype=np.float32)
 
         self.vao = glGenVertexArrays(1)
@@ -35,13 +44,20 @@ class GLCube(Cube):
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBindVertexArray(0)
 
+        self.angle = 0
+
     def draw(self):
+        self.shader.use()
+
+        self.angle += 0.001
+
         translation = glm.translate(glm.mat4(1), glm.vec3(*self.origin))
-        modelMatrix = translation
+        rotation = glm.rotate(glm.mat4(1), self.angle, glm.vec3(0, 1, 0))
+        modelMatrix = translation * rotation
 
         glUniformMatrix4fv(0, 1, GL_FALSE, glm.value_ptr(modelMatrix))
 
         # Sending the draw call
         glBindVertexArray(self.vao)
-        glDrawArrays(GL_TRIANGLES, 0, 6)
+        glDrawArrays(GL_TRIANGLES, 0, 6 * 2)
         glBindVertexArray(0)

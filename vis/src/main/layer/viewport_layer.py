@@ -17,7 +17,7 @@ class ViewportLayer(Layer):
             (0, 0, 1),
         ])
 
-        self.test_cube = fct.create_cube((0, 0, -1), (1, 1, 1))
+        self.test_cube = fct.create_cube((0, 0, -5), (1, 1, 1))
 
     def draw(self):
         self.point_field.draw()
