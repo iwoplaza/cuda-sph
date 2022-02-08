@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from numpy import ndarray, asarray, float64, random, zeros
 import numpy as np
@@ -7,33 +8,34 @@ from typing import Tuple, List
 
 @dataclass
 class Segment:
-    end_point: Tuple[float, float, float]
-    radius: float 
-    prev_segment: Segment
+    start_point: Tuple[float, float, float] = (0, 0, 0)
+    start_radius: float = 1
+    end_radius: float = 1
+    length: float = 1
 
 
-@dataclass 
+@dataclass
 class Pipe:
     segments: List[Segment]
 
 
 @dataclass
 class SimulationParameters:
-    n_particles: int
-    external_force: ndarray  # (x,y,z)
-    simulation_duration: int # in seconds
-    fps: int 
-    pipe: Pipe
-    space_dims: ndarray # (x,y,z)
-    voxel_dim: ndarray  # (x,y,z)
+    n_particles: int = 10000
+    external_force: ndarray = np.array([2, 4, 5])  # (x,y,z)
+    simulation_duration: int = 60  # in seconds
+    fps: int = 30
+    pipe: Pipe = Pipe(segments=[Segment()])
+    space_dims: ndarray = np.array([3, 2, 1])  # (x,y,z)
+    voxel_dim: ndarray = np.array([1, 2, 3])  # (x,y,z)
 
 
 @dataclass
 class SimulationState:
-    position: ndarray # (n x 3)
-    velocity: ndarray # (n x 3)
+    position: ndarray  # (n x 3)
+    velocity: ndarray  # (n x 3)
     density: ndarray  # (n)
-    voxel: ndarray    # (n) idx = x + y*w + z*w*d
+    voxel: ndarray  # (n) idx = x + y*w + z*w*d
 
 
 def get_default_start_sim_state(N) -> SimulationState:
@@ -44,6 +46,7 @@ def get_default_start_sim_state(N) -> SimulationState:
         voxel=zeros(N).astype("int32")
     )
 
+# TODO this is to remove or refactor
 def get_default_sim_parameters() -> SimulationParameters:
     return SimulationParameters(
         n_particles=100,
