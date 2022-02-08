@@ -9,6 +9,11 @@ class PipeBuilder:
     Notice that segments are created in way the methods are called and position and radius of first segment need to be
     set before adding new segments.
     """
+    _FIRST_SEGMENT_MESSAGE = "First segment can't be change after adding new segments"
+    _NEGATIVE_RADIUS_MESSAGE = "Radius must be positive"
+    _NEGATIVE_CHANGE_MESSAGE = "Change must be positive"
+    _NEGATIVE_LENGTH_MESSAGE = "Length must be positive"
+
     def __init__(self) -> None:
         self.__first_segment = True
         self.__pipe: Pipe = Pipe(segments=[Segment()])
@@ -20,7 +25,7 @@ class PipeBuilder:
         :param position: Centre starting point of first segment
         :return: Builder object
         """
-        assert self.__first_segment, "First can't be set after adding new segments"
+        assert self.__first_segment, self._FIRST_SEGMENT_MESSAGE
         self.__pipe.segments[0].start_point = position
         return self
 
@@ -31,8 +36,8 @@ class PipeBuilder:
         :param radius: Radius of first segment
         :return: Builder object
         """
-        assert self.__first_segment, "First can't be set after adding new segments"
-        assert radius > 0, "Radius must be positive"
+        assert self.__first_segment, self._FIRST_SEGMENT_MESSAGE
+        assert radius > 0, self._NEGATIVE_RADIUS_MESSAGE
         self.__pipe.segments[0].start_radius = radius
         return self
 
@@ -43,20 +48,22 @@ class PipeBuilder:
         :param radius: Radius at ends of first segment
         :return: Builder object
         """
-        assert self.__first_segment, "First can't be set after adding new segments"
-        assert radius > 0, "Radius must be positive"
+        assert self.__first_segment, self._FIRST_SEGMENT_MESSAGE
+        assert radius > 0, self._NEGATIVE_RADIUS_MESSAGE
         self.__pipe.segments[0].end_radius = radius
         return self
 
-    def with_starting_length(self, length: float):
+    def with_starting_length(self, length: float) -> 'PipeBuilder':
         """
         Sets length of first segment
 
         :param length: Length of first segment
         :return: Builder object
         """
-        assert self.__first_segment, "First can't be set after adding new segments"
-        assert length > 0, "Radius must be positive"
+        assert self.__first_segment, self._FIRST_SEGMENT_MESSAGE
+        assert length > 0, self._NEGATIVE_LENGTH_MESSAGE
+        self.__pipe.segments[0].length = length
+        return self
 
     def add_roller_segment(self, length) -> 'PipeBuilder':
         """
@@ -66,7 +73,7 @@ class PipeBuilder:
         :return: Builder object
         """
         self.__first_segment = False
-        assert length > 0, "Length of segment must be positive"
+        assert length > 0, self._NEGATIVE_LENGTH_MESSAGE
 
         last_segment = self.__pipe.segments[-1]
         new_start_point = (last_segment.start_point[0]+last_segment.length, last_segment.start_point[1],
@@ -74,7 +81,7 @@ class PipeBuilder:
 
         self.__pipe.segments.append(Segment(
             start_point=new_start_point,
-            start_radius=last_segment.start_radius,
+            start_radius=last_segment.end_radius,
             end_radius=last_segment.end_radius,
             length=length))
 
@@ -90,7 +97,7 @@ class PipeBuilder:
         :return: Builder object
         """
         self.add_roller_segment(length)
-        assert change > 0, "Change must be positive"
+        assert change > 0, self._NEGATIVE_CHANGE_MESSAGE
         assert change < self.__pipe.segments[-1].end_radius, "After change radius must be positive"
         self.__pipe.segments[-1].end_radius = self.__pipe.segments[-1].end_radius - change
         return self
@@ -105,7 +112,7 @@ class PipeBuilder:
         :return: Builder object
         """
         self.add_roller_segment(length)
-        assert change > 0, "Change must be positive"
+        assert change > 0, self._NEGATIVE_CHANGE_MESSAGE
         self.__pipe.segments[-1].end_radius = self.__pipe.segments[-1].end_radius + change
         return self
 
