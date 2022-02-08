@@ -51,14 +51,11 @@ class Loader:
         segments_data = self.__json_object["pipe"]['segments']
         segments = []
         for segment_data in segments_data:
-            if segments:
-                prev_segment = segments[-1]
-            else:
-                prev_segment = None
             segments.append(Segment(
-                radius=segment_data["radius"],
-                end_point=tuple(segment_data["end_point"]),
-                prev_segment=prev_segment
+                start_point=tuple(segment_data["start_point"]),
+                start_radius=segment_data["start_radius"],
+                end_radius=segment_data["end_radius"],
+                length=segment_data["length"]
             ))
         return Pipe(segments)
 

@@ -2,7 +2,8 @@ import unittest
 import shutil
 import numpy as np
 
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters, Segment, get_default_start_sim_state
+from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters, Segment,\
+    get_default_start_sim_state
 from common.main.serializer.loader import Loader
 from common.main.serializer.saver import Saver
 
@@ -18,7 +19,7 @@ class MyTestCase(unittest.TestCase):
     def test_settings_loading(self):
         path = "data"
         parameters = SimulationParameters()
-        second_segment = Segment(end_point=(21, 37, 00), radius=2, prev_segment=parameters.pipe.segments[0])
+        second_segment = Segment((1, 0, 0), 1, 4, 5)
         parameters.pipe.segments.append(second_segment)
         parameters.fps = 40
 
