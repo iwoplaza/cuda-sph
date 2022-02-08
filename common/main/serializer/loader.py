@@ -1,8 +1,9 @@
 import numpy as np
 import json
 
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters, Pipe, Segment, \
-    get_default_start_sim_state
+from numpy import array
+
+from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters, Pipe, Segment
 
 SETTINGS_FILE = "/settings.json"
 
@@ -24,11 +25,11 @@ class Loader:
         """
         :return: Loaded SimulationParameters
         """
-        print("Loading")
+        # print("Loading")
         simulation_parameters = SimulationParameters()
         for name, value in vars(SimulationParameters()).items():
             self.__manage_element(simulation_parameters, name, value)
-        print(simulation_parameters)
+        # print(simulation_parameters)
         return simulation_parameters
 
     def __manage_element(self, simulation_parameters: SimulationParameters, name: str, value) -> None:
@@ -66,7 +67,7 @@ class Loader:
         :param epoch: Number of epoch to load data from
         :return: SimulationState for selected epoch
         """
-        state = get_default_start_sim_state(1)
+        state = SimulationState(array(1), array(1), array(1), array(1))
         for name in vars(state).keys():
             setattr(state, name, np.load(self.__folder_path + "/" + name + "_" + str(epoch) + ".npy"))
         return state

@@ -6,7 +6,8 @@ from common.main.serializer.saver import Saver
 if __name__ == '__main__':
 
     params = SimulationParameters()
-    start_state = SimulationState(params.n_particles, params.space_size)
+    start_state = SimulationState(None, None, None, None)
+    start_state.init_randomly(params)
 
     saver = Saver("simulation_out", params)
     generator = StateGenerator(start_state, params)

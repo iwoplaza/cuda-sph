@@ -49,7 +49,7 @@ class Saver:
         if type(value) is np.ndarray:
             np.save(self.__folder_path + "/" + name + ".npy", value)
         else:
-            print(name, value)
+            # print(name, value)
             self._json_object[name] = value
 
     def save_next_state(self, simulation_state: SimulationState) -> None:

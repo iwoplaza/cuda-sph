@@ -1,14 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from numpy import ndarray, asarray, float64, random, zeros, int32
+from numpy import ndarray, float64, random, zeros, int32, asarray
 import numpy as np
 from typing import Tuple, List
 from sim.src.main.physics.constants import INF_R
 
-
-DEFAULT_N_PARTICLES = 10
-DEFAULT_SPACE_SIZE = 100
-DEFAULT_VOXEL_SIZE = INF_R * 2
+DEFAULT_N_PARTICLES = 6
+DEFAULT_SPACE_SIDE_LENGTH = 7
+DEFAULT_VOXEL_SIDE_LENGTH = INF_R * 2
 
 
 @dataclass
@@ -31,8 +30,8 @@ class SimulationParameters:
     simulation_duration: int32 = 60  # in seconds
     fps: int32 = 30
     pipe: Pipe = Pipe(segments=[Segment()])
-    space_size: ndarray = np.array([DEFAULT_SPACE_SIZE for _ in range(3)], dtype=float64)  # (x,y,z)
-    voxel_size: ndarray = np.array([DEFAULT_VOXEL_SIZE for _ in range(3)], dtype=float64)  # (x,y,z)
+    space_size: ndarray = np.array([DEFAULT_SPACE_SIDE_LENGTH for _ in range(3)], dtype=float64)  # (x,y,z)
+    voxel_size: ndarray = np.array([DEFAULT_VOXEL_SIDE_LENGTH for _ in range(3)], dtype=float64)  # (x,y,z)
 
 
 @dataclass
@@ -42,16 +41,12 @@ class SimulationState:
     density: ndarray  # (n)
     voxel: ndarray  # (n) idx = x + y*w + z*w*d
 
-    def __init__(self, N, space_size):
+    def init_randomly(self, params):
         # shuffle particles inside inside whole space (for fun)
-        position = np.random.random(N * 3).reshape((N, 3)).astype("float64")
-        for i in range(len(position)):
+        self.position = np.random.random(params.n_particles * 3).reshape((params.n_particles, 3)).astype("float64")
+        for i in range(params.n_particles):
             for dim in range(3):
-                position[i][dim] *= space_size[dim]
-        self.position = position
-
-        self.velocity = np.random.random(N * 3).reshape((N, 3)).astype("float64")
-        self.density = zeros(N).astype("float64")
-        self.voxel = zeros(N).astype("int32")
-
-
+                self.position[i][dim] *= params.space_size[dim]
+        self.velocity = np.random.random(params.n_particles * 3).reshape((params.n_particles, 3)).astype("float64")
+        self.density = zeros(params.n_particles).astype("float64")
+        self.voxel = zeros(params.n_particles).astype("int32")

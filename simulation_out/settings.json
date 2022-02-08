@@ -1,6 +1,6 @@
 {
     "fps": 30,
-    "n_particles": 10,
+    "n_particles": 6,
     "pipe": {
         "segments": [
             {
