@@ -24,6 +24,7 @@ class GLWindow(Window):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+        self.last_time = glutGet(GLUT_ELAPSED_TIME)
         self.__ui_shaders = CommonShaders.register_ui_shaders()
         self.__scene_shaders = CommonShaders.register_scene_shaders()
         self.ui_proj_mat = None
@@ -48,6 +49,9 @@ class GLWindow(Window):
 
         self.__setup_projection()
 
+    def __on_mouse_move(self, x: int, y: int):
+        pass
+
     def __update_ui_shader_uniforms(self, shader):
         shader.use()
         shader.set_projection_matrix(self.ui_proj_mat)
@@ -57,10 +61,14 @@ class GLWindow(Window):
         shader.set_projection_matrix(self.scene_proj_mat)
 
     def __display_func(self):
+        current_time = glutGet(GLUT_ELAPSED_TIME)
+        delta = float(current_time - self.last_time) * 0.001
+        self.last_time = current_time
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for layer in self.layers:
-            layer.draw()
+            layer.draw(delta)
 
         glutSwapBuffers()
 
@@ -68,4 +76,6 @@ class GLWindow(Window):
         glutDisplayFunc(self.__display_func)  # Tell OpenGL to call the showScreen method continuously
         glutIdleFunc(self.__display_func)  # Draw any graphics or shapes in the showScreen function at all times
         glutReshapeFunc(self.__on_resize)
+        glutMotionFunc(self.__on_mouse_move)
+        glutPassiveMotionFunc(self.__on_mouse_move)
         glutMainLoop()  # Keeps the window created above displaying/running in a loop

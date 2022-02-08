@@ -1,5 +1,5 @@
 
 
 class Layer:
-    def draw(self):
+    def draw(self, deltaTime: float):
         raise NotImplementedError()

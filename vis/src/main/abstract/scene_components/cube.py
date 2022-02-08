@@ -6,5 +6,5 @@ class Cube:
         self.origin = origin
         self.scale = scale
 
-    def draw(self):
+    def draw(self, deltaTime: float):
         raise NotImplementedError()

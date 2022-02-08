@@ -19,6 +19,6 @@ class ViewportLayer(Layer):
 
         self.test_cube = fct.create_cube((0, 0, -5), (1, 1, 1))
 
-    def draw(self):
+    def draw(self, deltaTime: float):
         self.point_field.draw()
-        self.test_cube.draw()
+        self.test_cube.draw(deltaTime)
