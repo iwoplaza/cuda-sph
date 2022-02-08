@@ -1,1 +1,19 @@
-{"simulation_duration": 1, "fps": 30, "particles_number": 10, "space_dims": [100, 100, 100], "voxel_dim": [4.68, 4.68, 4.68], "pipe": null}
+{
+    "fps": 30,
+    "n_particles": 10,
+    "pipe": {
+        "segments": [
+            {
+                "end_radius": 1,
+                "length": 1,
+                "start_point": [
+                    0,
+                    0,
+                    0
+                ],
+                "start_radius": 1
+            }
+        ]
+    },
+    "simulation_duration": 60
+}

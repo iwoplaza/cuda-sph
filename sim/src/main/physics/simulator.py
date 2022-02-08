@@ -16,7 +16,7 @@ class Simulator:
         self.__organize_voxels(old_state)
 
         return self.__compute_physics(old_state)
-    
+
     def __compute_physics(self, old_state) -> SimulationState:
         N: int = self.params.n_particles
 
@@ -75,12 +75,10 @@ class Simulator:
         # assign voxel indices to particles
         space_size = self.params.space_size
         voxel_size = self.params.voxel_size
-        space_dims = cuda.to_device(np.asarray([space_size[0] / voxel_size[0],
-                                                space_size[1] / voxel_size[1],
-                                                space_size[2] / voxel_size[2]], dtype=int32))
+        space_dims = cuda.to_device(np.asarray([space_size[dim] / voxel_size[dim] for dim in range(3)], dtype=int32))
         d_position = cuda.to_device(state.position)
-        d_new_voxels = cuda.to_device(zeros(N, dtype=int32)) # new buffer for voxel indices
-        kernels.assign_voxels_to_particles_kernel[threads_per_grid, grids_per_block]\
+        d_new_voxels = cuda.to_device(zeros(N, dtype=int32))  # new buffer for voxel indices
+        kernels.assign_voxels_to_particles_kernel[threads_per_grid, grids_per_block] \
             (d_new_voxels, d_position, np.asarray(self.params.voxel_size, float64), space_dims)
         state.voxel = d_new_voxels.copy_to_host()
 
@@ -89,6 +87,7 @@ class Simulator:
                                dtype=[('voxel_id', int32), ('particle_id', int32)])
         voxel_map.sort(order='voxel_id')
 
-        # create and populate voxel_begin and voxel_end arrays
+        # create and populate voxel_begin array
+
 
         return

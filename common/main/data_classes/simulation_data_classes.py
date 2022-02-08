@@ -1,17 +1,22 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
-from numpy import ndarray, asarray, float64, random, zeros
+from numpy import ndarray, asarray, float64, random, zeros, int32
 import numpy as np
 from typing import Tuple, List
+from sim.src.main.physics.constants import INF_R
+
+
+DEFAULT_N_PARTICLES = 10
+DEFAULT_SPACE_SIZE = 100
+DEFAULT_VOXEL_SIZE = INF_R * 2
 
 
 @dataclass
 class Segment:
-    start_point: Tuple[float, float, float] = (0, 0, 0)
-    start_radius: float = 1
-    end_radius: float = 1
-    length: float = 1
+    start_point: Tuple[float64, float64, float64] = (0, 0, 0)
+    start_radius: float64 = 1
+    end_radius: float64 = 1
+    length: float64 = 1
 
 
 @dataclass
@@ -21,13 +26,13 @@ class Pipe:
 
 @dataclass
 class SimulationParameters:
-    n_particles: int = 10000
-    external_force: ndarray = np.array([2, 4, 5])  # (x,y,z)
-    simulation_duration: int = 60  # in seconds
-    fps: int = 30
+    n_particles: int32 = DEFAULT_N_PARTICLES
+    external_force: ndarray = np.array([0.5, 0, 0], dtype=float64)  # (x,y,z)
+    simulation_duration: int32 = 60  # in seconds
+    fps: int32 = 30
     pipe: Pipe = Pipe(segments=[Segment()])
-    space_dims: ndarray = np.array([3, 2, 1])  # (x,y,z)
-    voxel_dim: ndarray = np.array([1, 2, 3])  # (x,y,z)
+    space_size: ndarray = np.array([DEFAULT_SPACE_SIZE for _ in range(3)], dtype=float64)  # (x,y,z)
+    voxel_size: ndarray = np.array([DEFAULT_VOXEL_SIZE for _ in range(3)], dtype=float64)  # (x,y,z)
 
 
 @dataclass
@@ -37,23 +42,16 @@ class SimulationState:
     density: ndarray  # (n)
     voxel: ndarray  # (n) idx = x + y*w + z*w*d
 
+    def __init__(self, N, space_size):
+        # shuffle particles inside inside whole space (for fun)
+        position = np.random.random(N * 3).reshape((N, 3)).astype("float64")
+        for i in range(len(position)):
+            for dim in range(3):
+                position[i][dim] *= space_size[dim]
+        self.position = position
 
-def get_default_start_sim_state(N) -> SimulationState:
-    return SimulationState(
-        position=np.random.random(N * 3).reshape((N, 3)).astype("float64"),
-        velocity=np.random.random(N * 3).reshape((N, 3)).astype("float64"),
-        density=zeros(N).astype("float64"),
-        voxel=zeros(N).astype("int32")
-    )
+        self.velocity = np.random.random(N * 3).reshape((N, 3)).astype("float64")
+        self.density = zeros(N).astype("float64")
+        self.voxel = zeros(N).astype("int32")
 
-# TODO this is to remove or refactor
-def get_default_sim_parameters() -> SimulationParameters:
-    return SimulationParameters(
-        n_particles=100,
-        external_force=asarray([0.5, 0.0, 0.0], dtype=float64),
-        simulation_duration=1,
-        fps=30,
-        pipe=Pipe(segments=None),
-        space_dims=(1, 1, 1),
-        voxel_dim=(1e-4, 1e-4, 1e-4)
-    )
+

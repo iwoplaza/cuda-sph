@@ -31,11 +31,11 @@ class Saver:
         self.__current_epoch = 0
 
     def __save_parameters(self, simulation_parameters: SimulationParameters) -> None:
-        print("Params: ", simulation_parameters)
+        # print("Params: ", simulation_parameters)
         for name, value in vars(simulation_parameters).items():
             self.__manage_element(name, value)
 
-        print(self._json_object)
+        # print(self._json_object)
         with open(self.__folder_path + SETTINGS_FILE, "w") as file:
             json.dump(self._json_object, file, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
