@@ -1,3 +1,5 @@
+from sim.src.main.physics.sph.base_strategy import get_index
+
 from numpy import float64, ndarray, int32
 from numba import cuda
 import numpy as np
@@ -7,18 +9,11 @@ import math
 MAX_NEIGHBOURS = 50
 
 @cuda.jit(device=True)
-def get_index():
-    th_idx = cuda.threadIdx.x
-    block_idx = cuda.blockIdx.x
-    block_width = cuda.blockDim.x
-    return block_width * block_idx + th_idx
-
-
 def compute_3d_voxel_idx(idx, position, voxel_size, voxel):
     for dim in range(3):
         voxel[dim] = int32(position[idx][dim] / voxel_size[dim])
 
-
+@cuda.jit(device=True)
 def compute_1d_idx(voxel, space_dim):
     return voxel[0] + voxel[1] * space_dim[1] + voxel[2] * space_dim[1] * space_dim[2]
 
