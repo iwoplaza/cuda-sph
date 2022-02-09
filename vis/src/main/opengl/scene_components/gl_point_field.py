@@ -1,3 +1,5 @@
+from typing import List
+
 from vis.src.main.abstract.scene_components import PointField
 from vis.src.main.vector import Vec3f
 from OpenGL.GL import *
@@ -27,7 +29,7 @@ class GLPointField(PointField):
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBindVertexArray(0)
 
-    def set_point_positions(self, positions: list[Vec3f]):
+    def set_point_positions(self, positions: List[Vec3f]):
         self.point_positions = positions
 
     def draw(self):

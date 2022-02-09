@@ -1,3 +1,5 @@
+from typing import List
+
 import glm
 from OpenGL.GL import *
 from OpenGL.GLUT import *
@@ -8,8 +10,8 @@ from .shader import Shader
 
 
 class GLWindow(Window):
-    __ui_shaders: list[Shader]
-    __scene_shaders: list[Shader]
+    __ui_shaders: List[Shader]
+    __scene_shaders: List[Shader]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

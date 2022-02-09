@@ -1,3 +1,5 @@
+from typing import List
+
 from vis.src.main.vector import Vec3f
 
 
@@ -6,7 +8,7 @@ class PointField:
         self.origin = origin
         self.scale = scale
 
-    def set_point_positions(self, positions: list[Vec3f]):
+    def set_point_positions(self, positions: List[Vec3f]):
         raise NotImplementedError()
 
     def draw(self):

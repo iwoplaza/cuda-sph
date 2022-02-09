@@ -1,3 +1,5 @@
+from typing import List
+
 from .shader import Shader, FileShader
 
 
@@ -11,7 +13,7 @@ class CommonShaders:
     POINT_FIELD: Shader = None
 
     @classmethod
-    def register_ui_shaders(cls) -> list[Shader]:
+    def register_ui_shaders(cls) -> List[Shader]:
         shaders = []
 
         cls.FONT = FileShader('text_shader', 'text_shader')
@@ -23,7 +25,7 @@ class CommonShaders:
         return shaders
 
     @classmethod
-    def register_scene_shaders(cls) -> list[Shader]:
+    def register_scene_shaders(cls) -> List[Shader]:
         shaders = []
 
         cls.SOLID = FileShader('solid', 'solid')
