@@ -94,12 +94,17 @@ class Simulator:
         # create and populate voxel_begin array by linearly iterating over voxel_map assign a beginning to each voxel
         n_voxels = space_dims[0] * space_dims[1] * space_dims[2]
         self.voxel_begin = np.array([-1 for _ in range(n_voxels)], dtype=int32)
-        map_idx = 0
+
         # TODO: fix this, it has some error
-        for voxel_idx in range(n_voxels):
-            if self.voxel_particle_map[map_idx][0] == voxel_idx:
-                self.voxel_begin[voxel_idx] = map_idx
+        self.__populate_voxel_begins()
+
+    def __populate_voxel_begins(self):
+        map_idx = 0
+        for voxel_idx in range(len(self.voxel_begin)):
             while self.voxel_particle_map[map_idx][0] < voxel_idx:
                 map_idx += 1
-
-
+                if map_idx >= len(self.voxel_particle_map):
+                    return
+            if self.voxel_particle_map[map_idx][0] == voxel_idx:
+                self.voxel_begin[voxel_idx] = map_idx
+        return
