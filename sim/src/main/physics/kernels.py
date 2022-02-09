@@ -147,24 +147,3 @@ def integrating_kernel(
         )
         updated_velocity[i][dim] += result_force[dim] / MASS * DT
         updated_position[i][dim] += updated_velocity[i][dim] * DT
-
-
-@cuda.jit
-def assign_voxels_to_particles_kernel(
-        voxels: ndarray,
-        position: ndarray,
-        voxel_size: ndarray,
-        space_dim: ndarray
-):
-    i = get_index()
-    if i >= position.shape[0]:
-        return
-
-    # compute 3d index of a voxel
-    voxel = cuda.local.array(3, int32)
-    for dim in range(3):
-        voxel[dim] = int32(position[i][dim] / voxel_size[dim])
-
-    # compute 1d index of a voxel and return
-    # idx = x + y*w + z*w*d
-    voxels[i] = voxel[0] + voxel[1] * space_dim[1] + voxel[2] * space_dim[1] * space_dim[2]
