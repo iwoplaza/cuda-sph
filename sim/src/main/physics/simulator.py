@@ -101,5 +101,3 @@ class Simulator:
                 self.voxel_begin[voxel_idx] = map_idx
             while self.voxel_particle_map[map_idx][0] < voxel_idx:
                 map_idx += 1
-
-
