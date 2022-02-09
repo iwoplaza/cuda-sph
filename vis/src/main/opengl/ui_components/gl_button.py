@@ -19,13 +19,11 @@ class GLButton(Button):
         self.panel = make_rectangle_mesh((0, 0), (self.text_width + padding_x*2, font.font_size + padding_y * 2))
         self.text_origin = (pos[0] + padding_x, pos[1] + font.font_size - int(font.font_size / 5) + padding_y)
 
-    def draw(self):
+    def draw(self, delta_time: float):
         # Background
         self.shader.use()
-
         model_view = glm.translate(glm.mat4(), glm.vec3(*self.pos, 0))
-
-        glUniformMatrix4fv(0, 1, GL_FALSE, glm.value_ptr(model_view))
+        self.shader.set_model_matrix(model_view)
 
         self.panel.draw()
 

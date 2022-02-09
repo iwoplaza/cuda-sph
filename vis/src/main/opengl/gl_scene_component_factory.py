@@ -1,6 +1,6 @@
 from vis.src.main.abstract import SceneComponentFactory
 from vis.src.main.vector import Vec3f
-from .scene_components import GLPointField, GLCube
+from .scene_components import GLPointField, GLCube, GLCamera
 from .gl_window import GLWindow
 
 
@@ -15,3 +15,7 @@ class GLSceneComponentFactory(SceneComponentFactory):
 
     def create_cube(self, origin: Vec3f, scale: Vec3f):
         return GLCube(origin, scale)
+
+    def create_camera(self, origin: Vec3f) -> GLCamera:
+        return GLCamera(self.window, origin)
+

@@ -53,9 +53,9 @@ class GLCube(Cube):
 
         translation = glm.translate(glm.mat4(1), glm.vec3(*self.origin))
         rotation = glm.rotate(glm.mat4(1), self.angle, glm.vec3(0, 1, 0))
-        modelMatrix = translation * rotation
+        model_matrix = translation * rotation
 
-        glUniformMatrix4fv(0, 1, GL_FALSE, glm.value_ptr(modelMatrix))
+        self.shader.set_model_matrix(model_matrix)
 
         # Sending the draw call
         glBindVertexArray(self.vao)

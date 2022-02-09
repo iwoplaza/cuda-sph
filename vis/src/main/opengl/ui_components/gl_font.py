@@ -101,7 +101,7 @@ class GLFont(Font):
             transRelM = glm.translate(glm.mat4(1), glm.vec3(xrel, yrel, 0))
             modelM = transOriginM * rotateM * transRelM * scaleM
 
-            glUniformMatrix4fv(0, 1, GL_FALSE, glm.value_ptr(modelM))
+            self.shader.set_model_matrix(modelM)
             glBindTexture(GL_TEXTURE_2D, ch[0])
             glDrawArrays(GL_TRIANGLES, 0, 6)
 
