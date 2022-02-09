@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
-from physics.simulator import Simulator
+import sim.src.main.physics.sph as sph
 
 
 class StateGenerator:
@@ -9,7 +9,7 @@ class StateGenerator:
         self.current_state = start_state
         self.current_frame_idx = -1
         self.n_frames = params.simulation_duration * params.fps
-        self.simulator = Simulator(params)
+        self.sph_strategy: sph.AbstractSPHStrategy = sph.NaiveSPHStrategy(params)
 
     def __next__(self) -> SimulationState:
         self.current_frame_idx += 1
@@ -20,7 +20,7 @@ class StateGenerator:
         if self.current_frame_idx >= self.n_frames:
             raise StopIteration
 
-        self.current_state = self.simulator.compute_next_state(self.current_state)
+        self.current_state = self.sph_strategy.compute_next_state(self.current_state)
 
         return self.current_state
 

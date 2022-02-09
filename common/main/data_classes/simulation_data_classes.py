@@ -27,8 +27,8 @@ class Pipe:
 class SimulationParameters:
     n_particles: int32 = DEFAULT_N_PARTICLES
     external_force: ndarray = np.array([0.5, 0, 0], dtype=float64)  # (x,y,z)
-    simulation_duration: int32 = 60  # in seconds
-    fps: int32 = 30
+    simulation_duration: int32 = 2  # in seconds
+    fps: int32 = 2
     pipe: Pipe = Pipe(segments=[Segment()])
     space_size: ndarray = np.array([DEFAULT_SPACE_SIDE_LENGTH for _ in range(3)], dtype=float64)  # (x,y,z)
     voxel_size: ndarray = np.array([DEFAULT_VOXEL_SIDE_LENGTH for _ in range(3)], dtype=float64)  # (x,y,z)
@@ -36,12 +36,11 @@ class SimulationParameters:
 
 @dataclass
 class SimulationState:
-    position: ndarray  # (n x 3)
-    velocity: ndarray  # (n x 3)
-    density: ndarray  # (n)
-    voxel: ndarray  # (n) idx = x + y*w + z*w*d
+    position: ndarray = np.array(1)  # (n x 3)
+    velocity: ndarray = np.array(1)  # (n x 3)
+    density: ndarray = np.array(1)   # (n)
 
-    def init_randomly(self, params):
+    def set_random_from_params(self, params):
         # shuffle particles inside inside whole space (for fun)
         self.position = np.random.random(params.n_particles * 3).reshape((params.n_particles, 3)).astype("float64")
         for i in range(params.n_particles):
@@ -49,4 +48,3 @@ class SimulationState:
                 self.position[i][dim] *= params.space_size[dim]
         self.velocity = np.random.random(params.n_particles * 3).reshape((params.n_particles, 3)).astype("float64")
         self.density = zeros(params.n_particles).astype("float64")
-        self.voxel = zeros(params.n_particles).astype("int32")
