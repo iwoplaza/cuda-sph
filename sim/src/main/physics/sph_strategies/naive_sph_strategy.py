@@ -9,12 +9,13 @@ import math
 
 class NaiveSPHStrategy(AbstractSPHStrategy):
     @property
-    def next_state(self) -> SimulationState:
-        return SimulationState(None, None, None, None)
+    def current_state(self) -> SimulationState:
+        return self.__state
 
-    def _initialize_next_state(self, old_state):
-        self.d_position = cuda.to_device(old_state.position)
-        self.d_velocity = cuda.to_device(old_state.velocity)
+    def _initialize_computation(self, old_state):
+        self.__state = old_state
+        self.d_position = cuda.to_device(self.__state.position)
+        self.d_velocity = cuda.to_device(self.__state.velocity)
         self.d_external_force = cuda.to_device(super().params.external_force)
 
         # b) arrays to be used during computations
@@ -24,18 +25,13 @@ class NaiveSPHStrategy(AbstractSPHStrategy):
         self.d_new_viscosity_term = cuda.to_device(
             np.zeros((super().params.n_particles, 3), dtype=np.float64)
         )
-        self.d_new_density = cuda.to_device(
-            np.zeros(super().params.n_particles, dtype=np.float64)
-        )
+        self.d_new_density = cuda.to_device(np.zeros(super().params.n_particles, dtype=np.float64))
         self.threads_per_grid: int = 64
         self.grids_per_block: int = math.ceil(super().params.n_particles / self.threads_per_grid)
 
     def _compute_density(self):
         kernels.density_kernel[self.grids_per_block, self.threads_per_grid](
-            self.d_new_density,
-            self.d_position,
-            constants.MASS,
-            constants.INF_R
+            self.d_new_density, self.d_position, constants.MASS, constants.INF_R
         )
         cuda.synchronize()
 
@@ -74,3 +70,11 @@ class NaiveSPHStrategy(AbstractSPHStrategy):
             constants.MASS,
         )
         cuda.synchronize()
+
+    def _finilize_computation(self):
+        self.__state = SimulationState(
+            self.d_position.copy_to_host(),
+            self.d_velocity.copy_to_host(),
+            self.d_new_density.copy_to_host(),
+            self.old_state.voxel,
+        )

@@ -8,8 +8,8 @@ class AbstractSPHStrategy(ABC):
         self.params = params
         self.dt = 1 / self.params
 
-    def compute_next_state(self, old_state) -> SimulationState:
-        self._initialize_next_state(old_state)
+    def compute_next_state(self, old_state: SimulationState) -> SimulationState:
+        self._initialize_computation(old_state)
         self._compute_density()
         self._compute_pressure()
         self._compute_viscosity()
@@ -18,11 +18,11 @@ class AbstractSPHStrategy(ABC):
 
     @property
     @abstractmethod
-    def next_state(self) -> SimulationState:
+    def current_state(self) -> SimulationState:
         pass
 
     @abstractmethod
-    def _initialize_next_state(self, old_state):
+    def _initialize_computation(self, old_state: SimulationState):
         pass
 
     @abstractmethod
@@ -39,4 +39,8 @@ class AbstractSPHStrategy(ABC):
 
     @abstractmethod
     def _integrate(self):
+        pass
+
+    @abstractmethod
+    def _finalzie_computation(self):
         pass
