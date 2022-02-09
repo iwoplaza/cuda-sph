@@ -1,5 +1,6 @@
 from numba import cuda
 
+
 @cuda.jit(device=True)
 def get_index():
     th_idx = cuda.threadIdx.x

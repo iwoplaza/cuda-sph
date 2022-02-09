@@ -1,12 +1,14 @@
+# TODO: signatures of kernels has been changed. tests has to be updated
+# TODO 2: actually lots of things changed, tests are outdated
+# :(
+
+
 import pytest
 import numpy as np
 from numba import cuda
 from math import ceil
-
-from sim.src.main.physics import kernels, constants
-
-
-# TODO: signatures of kernels has been changed. tests has to be updated
+from sim.src.main.physics import constants
+from sim.src.main.physics.sph.naive_strategy import kernels
 
 
 N_ELEMENTS = 1000

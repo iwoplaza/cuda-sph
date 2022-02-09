@@ -1,17 +1,15 @@
 from sim.src.main.physics.sph.base_strategy import get_index
-
 from numpy import float64, ndarray, int32
 from numba import cuda
 import numpy as np
-import math
+from sim.src.main.physics.sph.base_strategy.abstract_sph_strategy import MAX_NEIGHBOURS
 
-# TODO: array which will be filled need to be passed as first argument
-MAX_NEIGHBOURS = 50
 
 @cuda.jit(device=True)
-def compute_3d_voxel_idx(idx, position, voxel_size, voxel):
+def compute_3d_voxel_idx(voxel, idx, position, voxel_size):
     for dim in range(3):
         voxel[dim] = int32(position[idx][dim] / voxel_size[dim])
+
 
 @cuda.jit(device=True)
 def compute_1d_idx(voxel, space_dim):
@@ -20,7 +18,13 @@ def compute_1d_idx(voxel, space_dim):
 
 @cuda.jit(device=True)
 def get_neighbours(
-    neighbours, p_idx, position, voxel_size, space_dim, voxel_begin, voxel_particle_map
+        neighbours,
+        p_idx,
+        position,
+        voxel_size,
+        space_dim,
+        voxel_begin,
+        voxel_particle_map
 ):
     voxel = cuda.local.array(3, int32)
     compute_3d_voxel_idx(p_idx, position, voxel_size, voxel)
@@ -35,7 +39,7 @@ def get_neighbours(
                 neighbour_voxel_3d_idx[1] = voxel[1] + y
                 neighbour_voxel_3d_idx[2] = voxel[2] + z
                 voxel_neighbours[i] = compute_1d_idx(neighbour_voxel_3d_idx, space_dim)
-    
+
     nei_idx = 0
     for i in voxel_neighbours:
         start = voxel_begin[i]
@@ -59,7 +63,10 @@ def get_neighbours(
 
 @cuda.jit
 def assign_voxels_to_particles_kernel(
-    voxels: ndarray, position: ndarray, voxel_size: ndarray, space_dim: ndarray
+        voxels: ndarray,
+        position: ndarray,
+        voxel_size: ndarray,
+        space_dim: ndarray
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -76,18 +83,19 @@ def assign_voxels_to_particles_kernel(
 
 @cuda.jit
 def density_kernel(
-    result_density: ndarray,
-    position: ndarray,
-    voxel_begin,
-    voxel_particle_map,
-    voxel_size,
-    space_dim, 
-    MASS: float64,
-    INF_R: float64,
+        result_density: ndarray,
+        position: ndarray,
+        voxel_begin,
+        voxel_particle_map,
+        voxel_size,
+        space_dim,
+        MASS: float64,
+        INF_R: float64,
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
+
     neighbours = cuda.local.array(MAX_NEIGHBOURS, int32)
     last_nei = get_neighbours(neighbours, i, position, voxel_size, space_dim, voxel_begin, voxel_particle_map)
     new_density = 0
@@ -95,9 +103,9 @@ def density_kernel(
         if j == i:
             continue
         dist_norm = (
-            (position[i][0] - position[j][0]) ** 2
-            + (position[i][1] - position[j][1]) ** 2
-            + (position[i][2] - position[j][2]) ** 2
+                (position[i][0] - position[j][0]) ** 2
+                + (position[i][1] - position[j][1]) ** 2
+                + (position[i][2] - position[j][2]) ** 2
         )
         new_density += MASS * (315 / 64 * np.pi * INF_R ** 9) * (INF_R ** 2 - dist_norm) ** 3
     result_density[i] = new_density

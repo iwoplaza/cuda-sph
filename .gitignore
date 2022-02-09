@@ -1,4 +1,5 @@
-simulation_out
+simulation_out/
+sim/simulation_out/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
