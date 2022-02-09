@@ -1,10 +1,10 @@
-from vis.src.main.abstract import Layer, SceneComponentFactory
+from vis.src.main.abstract import Layer, SceneLayerContext
 
 
 class ViewportLayer(Layer):
-    component_factory: SceneComponentFactory
+    component_factory: SceneLayerContext
 
-    def __init__(self, fct: SceneComponentFactory):
+    def __init__(self, fct: SceneLayerContext):
         super().__init__()
 
         self.component_factory = fct

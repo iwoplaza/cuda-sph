@@ -108,6 +108,16 @@ class GLWindow(Window):
     def use_camera(self, camera):
         self.current_camera = camera
 
+    def perform_command(self, command):
+        if command.type == 'position-camera':
+            self.current_camera.set_position(command.position)
+            if command.yaw is not None:
+                self.current_camera.set_yaw(command.yaw)
+            if command.pitch is not None:
+                self.current_camera.set_pitch(command.pitch)
+        else:
+            print(f"Tried to perform unknown command: \"{command.type}\". Details: {dir(command)}")
+
     def run(self):
         glutDisplayFunc(self.__display_func)  # Tell OpenGL to call the showScreen method continuously
         glutIdleFunc(self.__display_func)  # Draw any graphics or shapes in the showScreen function at all times

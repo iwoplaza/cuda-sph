@@ -1,14 +1,17 @@
-from vis.src.main.abstract import SceneComponentFactory
+from vis.src.main.abstract import SceneLayerContext
 from vis.src.main.vector import Vec3f
 from .scene_components import GLPointField, GLCube, GLCamera
 from .gl_window import GLWindow
 
 
-class GLSceneComponentFactory(SceneComponentFactory):
-    window: GLWindow
+class GLSceneLayerContext(SceneLayerContext):
+    __window: GLWindow
 
     def __init__(self, window: GLWindow):
-        self.window = window
+        self.__window = window
+
+    def dispatch_command(self, command) -> None:
+        self.__window.perform_command(command)
 
     def create_point_field(self, origin: Vec3f, scale: Vec3f):
         return GLPointField(origin, scale)
@@ -17,5 +20,4 @@ class GLSceneComponentFactory(SceneComponentFactory):
         return GLCube(origin, scale)
 
     def create_camera(self, origin: Vec3f) -> GLCamera:
-        return GLCamera(self.window, origin)
-
+        return GLCamera(self.__window, origin)

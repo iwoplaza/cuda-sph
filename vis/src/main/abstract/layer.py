@@ -3,7 +3,8 @@ from .component import Component
 
 
 class Layer:
-    components: List[Component] = list()
+    def __init__(self):
+        self.components: List[Component] = []
 
     def add(self, component: Component):
         self.components.append(component)
@@ -20,7 +21,9 @@ class Layer:
         captured = False
 
         for c in self.components:
+            print(f"Pressing {c}. Captured: {captured}")
             captured |= c.on_mouse_btn_pressed(x, y, button)
+            print(f"Done pressing {c}. Captured: {captured}")
 
         return captured
 

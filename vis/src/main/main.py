@@ -7,14 +7,14 @@
 
 
 from vis.src.main.opengl import GLWindow
-from vis.src.main.opengl import GLUIComponentFactory, GLSceneComponentFactory
+from vis.src.main.opengl import GLUILayerContext, GLSceneLayerContext
 from vis.src.main.layer import MainUILayer, ViewportLayer
 
 
 if __name__ == '__main__':
     window = GLWindow(title="Visualization - Smoothed Particle Hydrodynamics")
-    scene_component_factory = GLSceneComponentFactory(window)
-    ui_component_factory = GLUIComponentFactory(window)
+    scene_component_factory = GLSceneLayerContext(window)
+    ui_component_factory = GLUILayerContext(window)
 
     window.add_layer(ViewportLayer(scene_component_factory))
     window.add_layer(MainUILayer(ui_component_factory))

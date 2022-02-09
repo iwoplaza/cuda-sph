@@ -26,7 +26,7 @@ class GLCamera(Camera):
         self.enable()
 
     def __update_view(self):
-        translation = glm.translate(glm.mat4(1), self.position)
+        translation = glm.translate(glm.mat4(1), -self.position)
         rotation = glm.rotate(glm.mat4(1), self.__pitch, glm.vec3(1, 0, 0))
         rotation = glm.rotate(rotation, self.__yaw, glm.vec3(0, 1, 0))
         self.view_mat = rotation * translation
@@ -37,14 +37,14 @@ class GLCamera(Camera):
     def __calculate_target_move_direction(self):
         vec = glm.vec3(0, 0, 0)
         if self.__is_key_pressed('a'):
-            vec.x += 1
-        if self.__is_key_pressed('d'):
             vec.x -= 1
+        if self.__is_key_pressed('d'):
+            vec.x += 1
 
         if self.__is_key_pressed('w'):
-            vec.z += 1
-        if self.__is_key_pressed('s'):
             vec.z -= 1
+        if self.__is_key_pressed('s'):
+            vec.z += 1
 
         if self.__is_key_pressed('q'):
             vec.y -= 1
@@ -73,6 +73,9 @@ class GLCamera(Camera):
 
     def on_mouse_btn_pressed(self, x: int, y: int, button: int) -> bool:
         self.__last_mouse_coords = (x, y)
+
+        print('Started dragging the camera')
+
         return True
 
     def on_mouse_move(self, x: int, y: int) -> None:
@@ -91,6 +94,20 @@ class GLCamera(Camera):
 
     def on_mouse_btn_released(self, x: int, y: int, button: int) -> None:
         self.__last_mouse_coords = None
+
+    def set_position(self, position: Vec3f):
+        self.position.x = position[0]
+        self.position.y = position[1]
+        self.position.z = position[2]
+        self.__update_view()
+
+    def set_yaw(self, yaw: float):
+        self.__yaw = yaw
+        self.__update_view()
+
+    def set_pitch(self, pitch: float):
+        self.__pitch = pitch
+        self.__update_view()
 
     def update(self, dt: float):
         self.__move_direction = self.__calculate_target_move_direction()
