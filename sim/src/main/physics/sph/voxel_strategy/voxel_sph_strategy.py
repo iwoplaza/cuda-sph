@@ -1,5 +1,5 @@
 from common.main.data_classes.simulation_data_classes import SimulationState
-from sim.src.main.physics.sph_strategies.abstract_sph_strategy import AbstractSPHStrategy
+from sim.src.main.physics.sph.base_strategy.abstract_sph_strategy import AbstractSPHStrategy
 import sim.src.main.physics.kernels as kernels
 import sim.src.main.physics.constants as constants
 from numba import cuda
