@@ -1,3 +1,4 @@
+from math import m
 from numba import cuda
 import numpy as np
 
@@ -77,17 +78,39 @@ def solve_collision(position, speed, i, pipe, pipe_segment, DT=0.01):
 
 @cuda.jit()
 def collision_kernel(
-    d_position: np.ndarray,
-    d_velocity: np.ndarray,
+    position: np.ndarray,
+    velocity: np.ndarray,
     pipe: np.ndarray
 ):
     i = get_index()
-    if i >= d_position.shape[0]:
+    if i >= position.shape[0]:
         return
 
-    pipe_index = find_segment(d_position[i], pipe)
+    pipe_index = find_segment(position[i], pipe)
     if pipe_index == -1:  # element is outside
         return
 
-    if is_out_of_pipe(d_position[i], pipe, pipe_index):
-        solve_collision(d_position, d_velocity, i, pipe, pipe_index)
+    if is_out_of_pipe(position[i], pipe, pipe_index):
+        solve_collision(position, velocity, i, pipe, pipe_index)
+
+
+@cuda.jit()
+def collision_kernel_box(
+    position:       np.ndarray,
+    velocity:       np.ndarray,
+    space_size:     np.ndarray
+):
+    """
+    Colliding particles with the box, which has the space size. All pipe concept is ignored.
+    """
+    i = get_index()
+    if i >= position.shape[0]:
+        return
+
+    for dim in range(3):            # test against all 3 dimensions
+        if position[i][dim] < 0:    # check if it's colliding
+            position[i][dim] = 0    # statically move back inside
+            velocity[i][dim] *= -1  # flip velocity, to change the direction of movement
+        if position[i][dim] > space_size[dim]:  # same thing to the other side
+            position[i][dim] = space_size[dim]
+            velocity[i][dim] *= -1
