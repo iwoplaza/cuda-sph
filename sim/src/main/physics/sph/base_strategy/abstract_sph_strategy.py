@@ -11,8 +11,8 @@ class AbstractSPHStrategy(ABC):
     def __init__(self, params: SimulationParameters):
         self.params = params
         self.dt = 1 / self.params.n_particles
-        self.old_state = None
-        self.new_state = None
+        self.old_state: SimulationState = None
+        self.new_state: SimulationState = None
         self.thread_organizer = ThreadOrganizer()
         thread_setup = self.thread_organizer.organize(params.n_particles)
         self.grid_size = thread_setup[0]

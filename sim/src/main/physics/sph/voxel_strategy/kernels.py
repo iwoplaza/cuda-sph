@@ -1,6 +1,8 @@
+from sim.src.main.physics.constants import INF_R
 from sim.src.main.physics.sph.base_strategy import get_index
 from numba import cuda
 import numpy as np
+from math import sqrt
 from sim.src.main.physics.sph.base_strategy.abstract_sph_strategy import MAX_NEIGHBOURS
 
 
@@ -16,7 +18,18 @@ def compute_1d_idx(voxel, space_dim):
 
 
 @cuda.jit(device=True)
+def are_neighbours(p1, p2, positions):
+    return sqrt(
+        (positions[p1][0] - positions[p2][0]) ** 2 +
+        (positions[p1][1] - positions[p2][1]) ** 2 +
+        (positions[p1][2] - positions[p2][2]) ** 2
+    ) <= INF_R
+
+
+@cuda.jit(device=True)
 def get_neighbours(
+        voxel,
+        neigh_voxels,
         neighbours,
         p_idx,
         position,
@@ -25,22 +38,25 @@ def get_neighbours(
         voxel_begin,
         voxel_particle_map
 ):
-    voxel = cuda.local.array(3, np.int32)
     compute_3d_voxel_idx(voxel, p_idx, position, voxel_size)
-
-    voxel_neighbours = cuda.local.array(9, np.int32)
+    # find all neighbouring voxels
     i = 0
-    for x in range(-1, 2):
-        for y in range(-1, 2):
-            for z in range(-1, 2):
-                neighbour_voxel_3d_idx = cuda.local.array(3, np.int32)
-                neighbour_voxel_3d_idx[0] = voxel[0] + x
-                neighbour_voxel_3d_idx[1] = voxel[1] + y
-                neighbour_voxel_3d_idx[2] = voxel[2] + z
-                voxel_neighbours[i] = compute_1d_idx(neighbour_voxel_3d_idx, space_dim)
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            for dz in range(-1, 2):
+                neigh_voxel = cuda.local.array(3, np.int32)
+                neigh_voxel[0] = voxel[0] + dx
+                neigh_voxel[1] = voxel[1] + dy
+                neigh_voxel[2] = voxel[2] + dz
+                idx_1d = compute_1d_idx(neigh_voxel, space_dim)
+                if neigh_voxel[0] >= 0 and neigh_voxel[1] >= 0 and neigh_voxel[2] >= 0:
+                    neigh_voxels[i] = idx_1d
+                    i += 1
 
-    nei_idx = 0
-    for i in voxel_neighbours:
+    neigh_idx = 0
+    # for each voxel...
+    for i in neigh_voxels:
+        # ...find start and end of it in map...
         start = voxel_begin[i]
         if start == -1:
             continue
@@ -52,12 +68,15 @@ def get_neighbours(
             if next_voxel_idx == len(voxel_begin)
             else voxel_begin[next_voxel_idx]
         )
-        for map_entry in range(start, end + 1):
-            neighbours[nei_idx] = voxel_particle_map[map_entry][1]
-            nei_idx += 1
-            if nei_idx >= len(neighbours):
-                return nei_idx
-    return nei_idx
+        # ... and add up to MAX_NEIGHBOURS particles from these voxels
+        for map_entry in range(start, end):
+            potential_neigh = voxel_particle_map[map_entry][1]
+            if are_neighbours(p_idx, potential_neigh, position):
+                neighbours[neigh_idx] = potential_neigh
+                neigh_idx += 1
+                if neigh_idx >= len(neighbours):
+                    return neigh_idx
+    return neigh_idx
 
 
 @cuda.jit
@@ -73,7 +92,7 @@ def assign_voxels_to_particles_kernel(
 
     # compute 3d index of a voxel
     voxel = cuda.local.array(3, np.int32)
-    compute_3d_voxel_idx(i, position, voxel_size, voxel)
+    compute_3d_voxel_idx(voxel, i, position, voxel_size)
 
     # compute 1d index of a voxel and return
     # idx = x + y*w + z*w*d
@@ -96,9 +115,9 @@ def density_kernel(
         return
 
     neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
-    last_nei = get_neighbours(neighbours, i, position, voxel_size, space_dim, voxel_begin, voxel_particle_map)
+    neigh_count = get_neighbours(neighbours, i, position, voxel_size, space_dim, voxel_begin, voxel_particle_map)
     new_density = 0
-    for j in neighbours[:last_nei]:
+    for j in neighbours[:neigh_count]:
         if j == i:
             continue
         dist_norm = (

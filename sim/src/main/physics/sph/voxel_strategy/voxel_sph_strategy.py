@@ -58,6 +58,9 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
     def _integrate(self):
         pass
 
+    def _collide(self):
+        pass
+
     def _finalize_computation(self):
         pass
 
