@@ -39,8 +39,26 @@ def find_segment(position, pipe):
 
 
 @cuda.jit(device=True)
-def solve_collision(position, speed, pipe, pipe_index):
-    pass
+def solve_collision(position, speed, i, pipe, pipe_segment):
+    start_radius = pipe[pipe_segment][3]
+    end_radius = pipe[pipe_segment + 1][3]
+    y_norm = position[1] - pipe[pipe_segment][1]
+    z_norm = position[2] - pipe[pipe_segment][2]
+    h = (y_norm ** 2 + z_norm ** 2) ** 0.5
+
+    edge_vector = cuda.local.array(3, np.double)
+
+    if start_radius == end_radius:
+        edge_vector[0] = 1
+        edge_vector[1] = 0
+        edge_vector[2] = 0
+    else:
+        edge_vector[0] = pipe[pipe_segment][4]
+        edge_vector[1] = abs(position[i][1]/h*(start_radius - end_radius))
+        edge_vector[2] = abs(position[i][2]/h*(start_radius - end_radius))
+        edge_vector_length = (edge_vector[0]**2+edge_vector[1]**2+edge_vector[2]**2)**0.5
+        for dim in range(0, 2):
+            edge_vector[dim] = edge_vector[dim] / edge_vector_length
 
 
 @cuda.jit()
@@ -58,4 +76,4 @@ def collision_kernel(
         return
 
     if is_out_of_pipe(d_position[i], pipe, pipe_index):
-        solve_collision(d_position[0], d_velocity, pipe, pipe_index)
+        solve_collision(d_position, d_velocity, i, pipe, pipe_index)
