@@ -12,12 +12,14 @@ if __name__ == '__main__':
     saver = Saver("simulation_out", params)
     generator = StateGenerator(start_state, params)
 
-    print(f"Running simulation with {params.n_particles} particles " 
-          f"in ({params.space_size[0]}, {params.space_size[1]}, "
-          f"{params.space_size[2]}) space")
+    print(f"Running simulation with {params.n_particles} particles.")
     print(f"Duration time: {params.simulation_duration} seconds. "
           f"Framerate: {params.fps}. "
-          f"Total frames number: {params.fps * params.simulation_duration}")
+          f"Total frames number: {params.fps * params.simulation_duration}.")
+    print(f"Thread layout: grid size {generator.sph_strategy.grid_size}, "
+          f"block size {generator.sph_strategy.block_size})")
 
     for state in generator:
         saver.save_next_state(state)
+
+    print("Simulation finished.")

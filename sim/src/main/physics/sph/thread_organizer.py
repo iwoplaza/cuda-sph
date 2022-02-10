@@ -1,15 +1,18 @@
 import math
 
 
+THREADS_PER_BLOCK = 128
+
+
 class ThreadOrganizer:
     def __init__(self):
         self.__detect_devices()
 
     # TODO: use device info to compute this
     def organize(self, n_threads_total) -> tuple[int, int]:
-        threads_per_grid: int = 64
-        grids_per_block: int = math.ceil(n_threads_total / threads_per_grid)
-        return threads_per_grid, grids_per_block
+        block_size = THREADS_PER_BLOCK
+        grid_size = math.ceil(n_threads_total / block_size)
+        return grid_size, block_size
 
     # TODO:
     def __detect_devices(self):

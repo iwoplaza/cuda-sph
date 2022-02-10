@@ -26,6 +26,7 @@ class AbstractSPHStrategy(ABC):
         self._compute_pressure()
         self._compute_viscosity()
         self._integrate()
+        self._collide()
         self._finalize_computation()
         return self.new_state
 
@@ -53,6 +54,10 @@ class AbstractSPHStrategy(ABC):
     def _finalize_computation(self):
         pass
 
+    @abstractmethod
+    def _collide(self):
+        pass
+
     def _send_arrays_to_gpu(self):
         self.d_position = cuda.to_device(self.old_state.position)
         self.d_velocity = cuda.to_device(self.old_state.velocity)
@@ -65,4 +70,6 @@ class AbstractSPHStrategy(ABC):
             np.zeros((self.params.n_particles, 3), dtype=np.float64)
         )
         self.d_new_density = cuda.to_device(np.zeros(self.params.n_particles, dtype=np.float64))
+
+
 
