@@ -16,10 +16,25 @@ class Segment:
     end_radius: np.float64 = 1
     length: np.float64 = 1
 
+    def to_numpy(self) -> np.ndarray:
+        segment_values = list(self.start_point)
+        segment_values.extend([self.start_radius, self.length])
+        return np.array(segment_values)
+
 
 @dataclass
 class Pipe:
     segments: List[Segment]
+
+    def to_numpy(self) -> np.ndarray:
+        to_stack = []
+        for segment in self.segments:
+            to_stack.append(segment.to_numpy())
+        last = self.segments[-1].to_numpy()
+        last[0] = last[0] + last[-1]
+        last[3] = self.segments[-1].end_radius
+        to_stack.append(last)
+        return np.stack(to_stack)
 
 
 @dataclass
