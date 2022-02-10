@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numba import cuda
 from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
+from sim.src.main.physics.sph.base_strategy.kernels import collision_kernel_box
 from sim.src.main.physics.sph.thread_organizer import ThreadOrganizer
 
 MAX_NEIGHBOURS = 32
@@ -53,9 +54,14 @@ class AbstractSPHStrategy(ABC):
     def _finalize_computation(self):
         pass
 
-    @abstractmethod
     def _collide(self):
-        pass
+        self.d_space_size = cuda.to_device(self.params.space_size)
+        collision_kernel_box[self.grid_size, self.block_size](
+            self.d_position,
+            self.d_velocity,
+            self.d_space_size
+        )
+        cuda.synchronize()
 
     def _send_arrays_to_gpu(self):
         self.d_position = cuda.to_device(self.old_state.position)
