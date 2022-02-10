@@ -31,7 +31,16 @@ pip install -r ./requirements.txt
     - Optymalizacja przeszukiwania n^2 za pomocą sąsiadów/voxeli
     - obsłużenie odbijania się od rurki
 - Wizualizer [Iwo]
-    - Szkielet projektu [Iwo]
-    - Ruch kamery.
-    - Shader managment.
-    - GUI (imgui?)
+    - **DONE**> Szkielet projektu
+    - **DONE**> Ruch kamery
+    - **DONE**> Shader managment
+    - **DONE**> GUI
+    - Wyświetlanie segmentów rurki
+    - Ładowanie plików z danymi
+    - Scrubbing tam i z powrotem, play, stop.
+
+# Visualizer
+### Controls
+- `W,A,S,D` - Move forward, left, back and right (relative to the camera)
+- `Q, E` - Move down and up (relative to the camera)
+- `Click and drag` - Rotate the camera
