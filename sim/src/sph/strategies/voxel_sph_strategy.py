@@ -4,7 +4,7 @@ import sim.src.sph.kernels.voxel_kernels as kernels
 from numba import cuda
 import numpy as np
 import math
-from sim.src.sph import constants
+from sim.src import constants
 from sim.src.sph.kernels import voxel_kernels
 
 
