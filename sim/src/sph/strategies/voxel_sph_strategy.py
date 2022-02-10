@@ -1,11 +1,11 @@
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
-from sim.src.main.physics import constants
-from sim.src.main.physics.sph.base_strategy.abstract_sph_strategy import AbstractSPHStrategy
-import sim.src.main.physics.sph.voxel_strategy.voxel_kernels as kernels
+from common.data_classes import SimulationParameters
+from sim.src.sph.strategies.abstract_sph_strategy import AbstractSPHStrategy
+import sim.src.sph.kernels.voxel_kernels as kernels
 from numba import cuda
 import numpy as np
 import math
-from sim.src.main.physics.sph.voxel_strategy import voxel_kernels
+from sim.src.sph import constants
+from sim.src.sph.kernels import voxel_kernels
 
 
 # TODO: it has some weird bug with CUDA memory does not work with more than ~10 particles (XD)

@@ -1,10 +1,9 @@
 import math
-from sim.src.main.physics import constants
-from sim.src.main.physics.sph.base_strategy import get_index
+from sim.src.sph import constants
 from numba import cuda
 import numpy as np
 from math import sqrt
-
+from sim.src.sph.kernels.base_kernels import get_index
 
 MAX_NEIGHBOURS = 32
 NEIGHBOURING_VOXELS_COUNT = 27

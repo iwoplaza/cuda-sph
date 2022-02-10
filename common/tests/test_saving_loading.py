@@ -3,9 +3,9 @@ import shutil
 import numpy as np
 from numpy import array
 
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters, Segment
-from common.main.serializer.loader import Loader
-from common.main.serializer.saver import Saver
+from common.data_classes import SimulationState, SimulationParameters, Segment
+from common.serializer import Loader
+from common.serializer import Saver
 
 
 def generate_simulation_state(params: SimulationParameters) -> SimulationState:

@@ -1,7 +1,7 @@
 import numpy as np
 import json
 import os
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
+from common.data_classes import SimulationState, SimulationParameters
 
 
 SETTINGS_FILE = "/settings.json"
