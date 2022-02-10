@@ -5,8 +5,8 @@ from typing import Tuple, List
 from sim.src.main.physics.constants import INF_R
 
 DEFAULT_N_PARTICLES = 50
-DEFAULT_SPACE_SIDE_LENGTH = 7
-DEFAULT_VOXEL_SIDE_LENGTH = INF_R * 2
+DEFAULT_SPACE_SIDE_LENGTH = 20 * INF_R
+DEFAULT_VOXEL_SIDE_LENGTH = INF_R
 
 
 @dataclass
