@@ -3,8 +3,8 @@
 layout (location = 0) in vec2 inPos;
 layout (location = 1) in vec2 inUV;
 
-layout (location = 0) uniform mat4 uModelMat;
-layout (location = 1) uniform mat4 uProjMat;
+layout (location = 0) uniform mat4 uProjMat;
+layout (location = 1) uniform mat4 uModelMat;
 
 void main()
 {

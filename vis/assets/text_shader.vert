@@ -5,8 +5,8 @@ layout (location = 1) in vec2 inUV;
 
 out vec2 vUV;
 
-layout (location = 0) uniform mat4 uModelMat;
-layout (location = 1) uniform mat4 uProjMat;
+layout (location = 0) uniform mat4 uProjMat;
+layout (location = 1) uniform mat4 uModelMat;
 
 void main()
 {
