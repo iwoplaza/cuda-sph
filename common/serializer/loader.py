@@ -1,6 +1,6 @@
 import numpy as np
 import json
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters, Pipe, Segment
+from common.data_classes import SimulationState, SimulationParameters, Pipe, Segment
 
 
 SETTINGS_FILE = "/settings.json"

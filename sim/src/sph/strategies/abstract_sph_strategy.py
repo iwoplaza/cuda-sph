@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from numba import cuda
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
-from sim.src.main.physics import constants
-from sim.src.main.physics.sph.base_strategy import base_kernels
-from sim.src.main.physics.sph.base_strategy.base_kernels import collision_kernel_box
-import sim.src.main.physics.sph.thread_layout as thread_layout
+from common.data_classes import SimulationState, SimulationParameters
+from sim.src.sph import constants
+from sim.src.sph.kernels import base_kernels
+from sim.src.sph.kernels.base_kernels import collision_kernel_box
+import sim.src.sph.thread_layout as thread_layout
 
 
 class AbstractSPHStrategy(ABC):

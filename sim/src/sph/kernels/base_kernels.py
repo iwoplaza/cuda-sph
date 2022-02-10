@@ -132,7 +132,7 @@ def collision_kernel_box(
     if i >= position.shape[0]:
         return
 
-    for dim in range(3):            # test against all 3 dimensions
+    for dim in range(3):            # tests against all 3 dimensions
         if position[i][dim] < 0:    # check if it's colliding
             position[i][dim] = 0    # statically move back inside
             velocity[i][dim] *= -1  # flip velocity, to change the direction of movement

@@ -1,4 +1,4 @@
-from sim.src.main.physics.sph.base_strategy import get_index
+from sim.src.sph.kernels.base_kernels import get_index
 from numba import cuda
 import numpy as np
 import math

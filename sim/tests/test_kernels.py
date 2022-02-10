@@ -6,12 +6,11 @@ import pytest
 import numpy as np
 from numba import cuda
 from math import ceil
-from common.main.data_classes.simulation_data_classes import SimulationParameters, SimulationState
-from sim.src.main.physics import constants
-from sim.src.main.physics.constants import INF_R as H
-from sim.src.main.physics.sph import VoxelSPHStrategy
-from sim.src.main.physics.sph.naive_strategy import naive_kernels as naive_kernels
-from sim.src.main.physics.sph.voxel_strategy.voxel_kernels import get_neighbours
+from common.data_classes import SimulationParameters, SimulationState
+from sim.src.sph.constants import INF_R as H
+from sim.src.sph import VoxelSPHStrategy, constants
+from sim.src.sph.kernels import naive_kernels as naive_kernels
+from sim.src.sph.kernels.voxel_kernels import get_neighbours
 
 
 N_ELEMENTS = 1000

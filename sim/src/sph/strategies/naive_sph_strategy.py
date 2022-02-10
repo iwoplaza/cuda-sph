@@ -1,8 +1,8 @@
-from common.main.data_classes.simulation_data_classes import SimulationParameters
-from sim.src.main.physics.sph.base_strategy.abstract_sph_strategy import AbstractSPHStrategy
-import sim.src.main.physics.constants as constants
+from common.data_classes import SimulationParameters
+from sim.src.sph.strategies.abstract_sph_strategy import AbstractSPHStrategy
+import sim.src.sph.constants as constants
 from numba import cuda
-from sim.src.main.physics.sph.naive_strategy import naive_kernels
+from sim.src.sph.kernels import naive_kernels
 
 
 class NaiveSPHStrategy(AbstractSPHStrategy):

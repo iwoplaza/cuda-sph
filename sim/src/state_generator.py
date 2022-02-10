@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
-import sim.src.main.physics.sph as sph
+from common.data_classes import SimulationState, SimulationParameters
+import sim.src.sph as sph
 
 
 class StateGenerator:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from state_generator import StateGenerator
-from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
-from common.main.serializer.saver import Saver
+from common.data_classes import SimulationState, SimulationParameters
+from common.serializer.saver import Saver
 
 if __name__ == '__main__':
 

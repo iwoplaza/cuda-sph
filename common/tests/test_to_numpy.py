@@ -1,8 +1,8 @@
 import unittest
 
 
-from common.main.data_classes.simulation_data_classes import Segment, Pipe
-from common.main.data_classes.pipe_builder import PipeBuilder
+from common.data_classes import Segment, Pipe
+from common.pipe_builder import PipeBuilder
 
 import numpy as np
 

@@ -1,5 +1,5 @@
 from typing import Tuple
-from common.main.data_classes.simulation_data_classes import Pipe, Segment
+from common.data_classes import Pipe, Segment
 
 
 class PipeBuilder:
