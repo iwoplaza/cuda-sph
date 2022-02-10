@@ -1,4 +1,3 @@
-from math import m
 from numba import cuda
 import numpy as np
 
@@ -9,6 +8,32 @@ def get_index():
     block_idx = cuda.blockIdx.x
     block_width = cuda.blockDim.x
     return block_width * block_idx + th_idx
+
+
+@cuda.jit
+def integrating_kernel(
+        updated_position: np.ndarray,
+        updated_velocity: np.ndarray,
+        external_force: np.ndarray,
+        pressure_term: np.ndarray,
+        viscosity_term: np.ndarray,
+        DT: np.float64,
+        MASS: np.float64
+):
+    i = get_index()
+    if i >= updated_position.shape[0]:
+        return
+
+    # perform numerical integration with 'dt' timestep (in seconds)
+    result_force = cuda.local.array(3, np.float64)
+    for dim in range(3):
+        result_force[dim] = (
+                external_force[dim] +
+                pressure_term[i][dim] +
+                viscosity_term[i][dim]
+        )
+        updated_velocity[i][dim] += result_force[dim] / MASS * DT
+        updated_position[i][dim] += updated_velocity[i][dim] * DT
 
 
 @cuda.jit(device=True)

@@ -1,6 +1,4 @@
 from sim.src.main.physics.sph.base_strategy import get_index
-
-from numpy import float64, ndarray, int32
 from numba import cuda
 import numpy as np
 import math
@@ -8,10 +6,10 @@ import math
 
 @cuda.jit
 def density_kernel(
-        result_density: ndarray,
-        position: ndarray,
-        MASS: float64,
-        INF_R: float64
+        result_density: np.ndarray,
+        position: np.ndarray,
+        MASS: np.float64,
+        INF_R: np.float64
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -36,13 +34,13 @@ def density_kernel(
 
 @cuda.jit
 def pressure_kernel(
-        result_pressure_term: ndarray,
-        density: ndarray,
-        position: ndarray,
-        MASS: float64,
-        INF_R: float64,
-        K: float64,
-        RHO_0: float64,
+        result_pressure_term: np.ndarray,
+        density: np.ndarray,
+        position: np.ndarray,
+        MASS: np.float64,
+        INF_R: np.float64,
+        K: np.float64,
+        RHO_0: np.float64,
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -80,13 +78,13 @@ def pressure_kernel(
 
 @cuda.jit
 def viscosity_kernel(
-        result_viscosity_term: ndarray,
-        density: ndarray,
-        position: ndarray,
-        velocity: ndarray,
-        MASS: float64,
-        INF_R: float64,
-        VISC: float64,
+        result_viscosity_term: np.ndarray,
+        density: np.ndarray,
+        position: np.ndarray,
+        velocity: np.ndarray,
+        MASS: np.float64,
+        INF_R: np.float64,
+        VISC: np.float64,
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -115,29 +113,3 @@ def viscosity_kernel(
         result_viscosity_term[i][dim] = (
                 VISC * new_viscosity_term[dim] / density[i]
         )
-
-
-@cuda.jit
-def integrating_kernel(
-        updated_position: ndarray,
-        updated_velocity: ndarray,
-        external_force: ndarray,
-        pressure_term: ndarray,
-        viscosity_term: ndarray,
-        DT: float64,
-        MASS: float64
-):
-    i = get_index()
-    if i >= updated_position.shape[0]:
-        return
-
-    # perform numerical integration with 'dt' timestep (in seconds)
-    result_force = cuda.local.array(3, float64)
-    for dim in range(3):
-        result_force[dim] = (
-                external_force[dim] +
-                pressure_term[i][dim] +
-                viscosity_term[i][dim]
-        )
-        updated_velocity[i][dim] += result_force[dim] / MASS * DT
-        updated_position[i][dim] += updated_velocity[i][dim] * DT
