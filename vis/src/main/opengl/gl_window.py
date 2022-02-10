@@ -27,6 +27,8 @@ class GLWindow(Window):
         wind = glutCreateWindow(self.title)  # Give your window a title
 
         glEnable(GL_BLEND)
+        glEnable(GL_PROGRAM_POINT_SIZE)
+        glEnable(GL_POINT_SMOOTH)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         self.last_time = glutGet(GLUT_ELAPSED_TIME)

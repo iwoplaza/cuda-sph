@@ -1,12 +1,12 @@
 from typing import List
 
-from .shader import Shader, SceneShader, load_shader_src_from_asset
+from .shader import Shader, SceneShader, UISolidShader, load_shader_src_from_asset
 
 
 class CommonShaders:
     # UI
     FONT: Shader = None
-    UI_SOLID: Shader = None
+    UI_SOLID: UISolidShader = None
 
     # Viewport
     SOLID: SceneShader = None
@@ -19,7 +19,7 @@ class CommonShaders:
         cls.FONT = Shader(**load_shader_src_from_asset('text_shader'))
         shaders.append(cls.FONT)
 
-        cls.UI_SOLID = Shader(**load_shader_src_from_asset('ui_solid_shader'))
+        cls.UI_SOLID = UISolidShader(**load_shader_src_from_asset('ui_solid_shader'))
         shaders.append(cls.UI_SOLID)
 
         return shaders

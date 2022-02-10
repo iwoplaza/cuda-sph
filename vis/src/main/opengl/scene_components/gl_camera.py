@@ -6,7 +6,7 @@ from vis.src.main.vector import Vec3f
 
 
 class GLCamera(Camera):
-    def __init__(self, window, origin: Vec3f):
+    def __init__(self, window, origin: Vec3f, yaw: float = None, pitch: float = None):
         super().__init__(origin=origin)
 
         self.__window = window
@@ -19,8 +19,8 @@ class GLCamera(Camera):
         self.__move_direction = glm.vec3(0, 0, 0)
 
         self.__pressed = dict()
-        self.__pitch = 0
-        self.__yaw = 0
+        self.__pitch = pitch
+        self.__yaw = yaw
 
         self.__update_view()
         self.enable()
@@ -57,25 +57,29 @@ class GLCamera(Camera):
         return vec
 
     def setup_projection(self, width: int, height: int):
-        self.proj_mat = glm.perspective(90.0, width / height, 0.01, 1000)
+        self.proj_mat = glm.perspective(np.pi / 2, width / height, 0.01, 1000)
 
     def enable(self):
         self.__window.use_camera(self)
 
     def on_key_pressed(self, key: bytes) -> bool:
-        decoded = key.decode("utf-8").lower()
-        self.__pressed[decoded] = True
+        try:
+            decoded = key.decode("utf-8").lower()
+            self.__pressed[decoded] = True
+        except UnicodeDecodeError:
+            pass
+
         return True
 
     def on_key_released(self, key: bytes) -> None:
-        decoded = key.decode("utf-8").lower()
-        self.__pressed[decoded] = False
+        try:
+            decoded = key.decode("utf-8").lower()
+            self.__pressed[decoded] = False
+        except UnicodeDecodeError:
+            pass
 
     def on_mouse_btn_pressed(self, x: int, y: int, button: int) -> bool:
         self.__last_mouse_coords = (x, y)
-
-        print('Started dragging the camera')
-
         return True
 
     def on_mouse_move(self, x: int, y: int) -> None:

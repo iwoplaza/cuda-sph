@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 from OpenGL.GL import *
 from OpenGL.GL import shaders
 import glm
@@ -42,6 +42,16 @@ class SceneShader(Shader):
 
     def set_view_matrix(self, mat):
         glUniformMatrix4fv(self.view_matrix_uniform_id, 1, GL_FALSE, glm.value_ptr(mat))
+
+
+class UISolidShader(Shader):
+    def __init__(self, vert_shader_src, frag_shader_src, uniform_indices: Dict[str, int] = None):
+        super().__init__(vert_shader_src, frag_shader_src, uniform_indices)
+
+        self.color_uniform_id = glGetUniformLocation(self.program, "uColor")
+
+    def set_color(self, col: Tuple[float, float, float, float]):
+        glUniform4fv(self.color_uniform_id, 1, col)
 
 
 def load_shader_src_from_asset(vert_shader_name, frag_shader_name=None):

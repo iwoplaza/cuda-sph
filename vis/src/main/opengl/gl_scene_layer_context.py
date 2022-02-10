@@ -19,5 +19,5 @@ class GLSceneLayerContext(SceneLayerContext):
     def create_cube(self, origin: Vec3f, scale: Vec3f):
         return GLCube(origin, scale)
 
-    def create_camera(self, origin: Vec3f) -> GLCamera:
-        return GLCamera(self.__window, origin)
+    def create_camera(self, origin: Vec3f, yaw: float = None, pitch: float = None) -> GLCamera:
+        return GLCamera(self.__window, origin, yaw = yaw, pitch = pitch)

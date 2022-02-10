@@ -48,7 +48,11 @@ class GLButton(Button):
         self.shader.set_model_matrix(model_view)
 
         if not self.active:
-            self.panel.draw()
+            self.shader.set_color((0.1, 0.1, 0.1, 1))
+        else:
+            self.shader.set_color((0.2, 0.2, 0.2, 1))
+
+        self.panel.draw()
 
         # Text
         self.font.use()

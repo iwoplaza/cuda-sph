@@ -14,7 +14,7 @@ class GLUILayerContext(UILayerContext):
     def dispatch_command(self, command) -> None:
         self.__window.perform_command(command)
 
-    def create_font(self, path: str, font_size: int = 16):
+    def create_font(self, path: str, font_size: int = 18):
         return GLFont(path, font_size)
 
     def create_button(self, font: Font, pos: Tuple[int, int], label: str, click_command=None):
