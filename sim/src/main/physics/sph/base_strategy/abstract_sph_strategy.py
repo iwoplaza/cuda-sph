@@ -4,7 +4,6 @@ from numba import cuda
 from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
 from sim.src.main.physics.sph.thread_organizer import ThreadOrganizer
 
-
 MAX_NEIGHBOURS = 32
 
 
@@ -70,6 +69,3 @@ class AbstractSPHStrategy(ABC):
             np.zeros((self.params.n_particles, 3), dtype=np.float64)
         )
         self.d_new_density = cuda.to_device(np.zeros(self.params.n_particles, dtype=np.float64))
-
-
-
