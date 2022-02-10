@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, List
-from sim.src.sph.constants import INF_R
+from sim.src.constants import INF_R
 
 DEFAULT_N_PARTICLES = 100
 DEFAULT_SPACE_SIDE_LENGTH = 20 * INF_R

@@ -1,5 +1,5 @@
 import math
-from sim.src.sph import constants
+from sim.src import constants
 from numba import cuda
 import numpy as np
 from math import sqrt

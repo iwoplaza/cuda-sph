@@ -7,8 +7,9 @@ import numpy as np
 from numba import cuda
 from math import ceil
 from common.data_classes import SimulationParameters, SimulationState
-from sim.src.sph.constants import INF_R as H
-from sim.src.sph import VoxelSPHStrategy, constants
+from sim.src.constants import INF_R as H
+from sim.src.sph import VoxelSPHStrategy
+from sim.src import constants
 from sim.src.sph.kernels import naive_kernels as naive_kernels
 from sim.src.sph.kernels.voxel_kernels import get_neighbours
 
