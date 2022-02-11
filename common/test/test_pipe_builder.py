@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 
 from common.main.data_classes.simulation_data_classes import Segment, Pipe
 from common.main.data_classes.pipe_builder import PipeBuilder
@@ -91,7 +92,7 @@ class MyTestCase(unittest.TestCase):
 
         first_segment = Segment(start_radius=10, end_radius=5)
         second_segment = Segment((1, 0, 0), 5, 5, 1)
-        third_segment = Segment((2, 0, 0), 5, 10, 1)
+        third_segment = Segment((2, 0, 0), np.float64(5), 10, 1)
         expected_pipe = Pipe([first_segment, second_segment, third_segment])
 
         self.assertEqual(expected_pipe, pipe)
