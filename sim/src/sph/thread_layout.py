@@ -1,4 +1,5 @@
 import math
+from typing import Tuple
 
 from numba import cuda
 
@@ -23,7 +24,7 @@ core_count = {
 }
 
 
-def organize(n_threads_total) -> tuple[int, int]:
+def organize(n_threads_total) -> Tuple[int, int]:
     device = cuda.get_current_device()
     block_size = core_count[device.compute_capability]
     if n_threads_total >= MAX_GRID_SIZE_X:
