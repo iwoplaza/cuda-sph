@@ -53,33 +53,38 @@ def get_neighbours(
                 neigh_voxel[0] = voxel[0] + dx
                 neigh_voxel[1] = voxel[1] + dy
                 neigh_voxel[2] = voxel[2] + dz
-                idx = compute_1d_idx(neigh_voxel, space_dim)
-                if neigh_voxel[0] >= 0 and neigh_voxel[1] >= 0 and neigh_voxel[2] >= 0:
-                    neigh_voxels[i] = idx
+                # discard those not in space size
+                is_in = True
+                for dim in range(3):
+                    if neigh_voxel[dim] < 0 or neigh_voxel[dim] >= space_dim[dim]:
+                        is_in = False
+                        break
+                if is_in:
+                    neigh_voxels[i] = compute_1d_idx(neigh_voxel, space_dim)
                     i += 1
-
+    # for each neighbouring voxel...
     neigh_idx = 0
-    # for each voxel...
     for i in neigh_voxels:
+        if i == -1 or voxel_begin[i] == -1:
+            continue
         # ...find start and end of it in map...
         start = voxel_begin[i]
-        if start != -1:
-            next_voxel_idx = i + 1
-            while voxel_begin[next_voxel_idx] == -1 and next_voxel_idx < len(voxel_begin):
-                next_voxel_idx += 1
-            end = (
-                len(voxel_particle_map)
-                if next_voxel_idx == len(voxel_begin)
-                else voxel_begin[next_voxel_idx]
-            )
-            # ... and add up to MAX_NEIGHBOURS particles from these voxels
-            for map_entry in range(start, end):
-                potential_neigh = voxel_particle_map[map_entry][1]
-                if are_neighbours(p_idx, potential_neigh, position):
-                    neighbours[neigh_idx] = potential_neigh
-                    neigh_idx += 1
-                    if neigh_idx >= MAX_NEIGHBOURS:
-                        return neigh_idx
+        next_voxel_idx = i + 1
+        while voxel_begin[next_voxel_idx] == -1 and next_voxel_idx < len(voxel_begin):
+            next_voxel_idx += 1
+        end = (
+            len(voxel_particle_map)
+            if next_voxel_idx == len(voxel_begin)
+            else voxel_begin[next_voxel_idx]
+        )
+        # ... and add up to MAX_NEIGHBOURS particles from these voxels
+        for map_entry in range(start, end):
+            potential_neigh = voxel_particle_map[map_entry][1]
+            if are_neighbours(p_idx, potential_neigh, position):
+                neighbours[neigh_idx] = potential_neigh
+                neigh_idx += 1
+                if neigh_idx >= MAX_NEIGHBOURS:
+                    return neigh_idx
     return neigh_idx
 
 
