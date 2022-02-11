@@ -1,5 +1,6 @@
 from numba import cuda
 import numpy as np
+import math
 
 
 @cuda.jit(device=True)
@@ -37,6 +38,14 @@ def integrating_kernel(
 
 
 @cuda.jit(device=True)
+def calc_x_at_segment_beginning(pipe, pipe_segment):
+    x_beginning = pipe[0][0]
+    for i in range(0, pipe_segment):
+        x_beginning += pipe[i][4]
+    return x_beginning
+
+
+@cuda.jit(device=True)
 def is_out_of_pipe(position, pipe, pipe_segment):
     start_radius = pipe[pipe_segment][3]
     end_radius = pipe[pipe_segment+1][3]
@@ -47,19 +56,19 @@ def is_out_of_pipe(position, pipe, pipe_segment):
     if start_radius == end_radius:
         return h > start_radius
     elif start_radius < end_radius:
-        x_norm = position[1] - pipe[pipe_segment][0]
+        delta = position[0] - calc_x_at_segment_beginning(pipe, pipe_segment)
         truncated_length = pipe[pipe_segment][4]*start_radius/(end_radius-start_radius)
-        return h > start_radius + x_norm/truncated_length
+        return h > start_radius*(1.0 + delta/truncated_length)
     else:
-        x_norm = pipe[pipe_segment][0] - position[1]
+        delta = calc_x_at_segment_beginning(pipe, pipe_segment) + pipe[pipe_segment][4] - position[0]
         truncated_length = pipe[pipe_segment][4]*end_radius/(start_radius-end_radius)
-        return h > start_radius + x_norm/truncated_length
+        return h > end_radius*(1.0 + delta/truncated_length)
 
 
 @cuda.jit(device=True)
 def find_segment(position, pipe):
-    for j in range(1, pipe.shape[0]-1):
-        if pipe[j][0] < position[0] < pipe[j+1][0]:
+    for j in range(0, pipe.shape[0]-1):
+        if pipe[j][0] <= position[0] < pipe[j+1][0]:
             return j
     return -1
 
@@ -81,56 +90,98 @@ def calc_collision_move_vector_length(l_point, l_vector, p_point, p_vector) -> n
 
 
 @cuda.jit(device=True)
-def solve_collision(position, speed, i, pipe, pipe_segment, DT=0.01):
+def calc_summary_vector(l_vector, p_vector):
+    scalar = 0
+    for dim in range(0, 3):
+        scalar = scalar + l_vector[dim]*p_vector[dim]
+    l_vector_length = (l_vector[0]**2+l_vector[1]**2+l_vector[2]**2)**0.5
+    p_vector_length = (l_vector[0] ** 2 + l_vector[1] ** 2 + l_vector[2] ** 2) ** 0.5
+    cos_value = scalar / (l_vector_length + p_vector_length)
+
+    summary_vector = cuda.local.array(3, np.double)
+    for dim in range(0, 3):
+        summary_vector[dim] = l_vector[dim]/l_vector_length*cos_value
+    return summary_vector
+
+
+@cuda.jit(device=True)
+def calc_vector_length(vector):
+    length = 0
+    for i in range(0, len(vector)):
+        length += vector[i]**2
+    return math.sqrt(length)
+
+
+
+@cuda.jit(device=True)
+def calc_distance_between_points(first, second):
+    length = 0
+    for i in range(0, len(first)):
+        length += (first[i]-second[i])**2
+    return math.sqrt(length)
+
+
+@cuda.jit(device=True)
+def solve_collision(position, speed, i, pipe, pipe_segment):
     start_radius = pipe[pipe_segment][3]
     end_radius = pipe[pipe_segment + 1][3]
-    y_norm = position[i][1] - pipe[pipe_segment][1]
-    z_norm = position[i][2] - pipe[pipe_segment][2]
+    y_norm = position[1] - pipe[pipe_segment][1]
+    z_norm = position[2] - pipe[pipe_segment][2]
     h = (y_norm ** 2 + z_norm ** 2) ** 0.5
 
     edge_vector = cuda.local.array(3, np.double)
 
     if start_radius == end_radius:
-        delta_point = (position[i][1]/h*start_radius-position[i][1])/speed[i][1]  # don't need for solving equation
+        t = (position[1]/h*start_radius-position[1])/speed[1]  # don't need for solving equation
 
         collision_point = cuda.local.array(3, np.double)  # calculating collision point
         for dim in range(0, 3):
-            collision_point[dim] = position[i][dim] + speed[i][dim]*delta_point
+            collision_point[dim] = position[dim] + speed[i][dim]*t
 
-        way_after_collision = 0
-        for dim in range(0, 3):
-            way_after_collision = way_after_collision + (position[i][dim] - collision_point[dim])**2
-        way_after_collision = way_after_collision**0.5
+        way_after_collision = calc_distance_between_points(position, collision_point, 3)
 
         for dim in range(1, 3):
-            speed[i][dim] = -speed[i][dim]
+            speed[dim] = -speed[dim]
 
-        speed_vec_length = 0
-        for dim in range(1, 3):
-            speed_vec_length = speed_vec_length+speed[i][dim]**2
-        speed_vec_length = speed_vec_length**0.5
+        speed_vec_length = calc_vector_length(speed, 3)
 
         for dim in range(1, 3):
-            position[i][dim] = collision_point[dim] + speed[i][dim]*way_after_collision/speed_vec_length
+            position[dim] = collision_point[dim] + speed[dim]*way_after_collision/speed_vec_length
 
     else:
         first_l_point = cuda.local.array(3, np.double)  # punkty na prostej i jej wektor
-        first_l_point[0] = pipe[pipe_segment][0] + start_radius
-        first_l_point[1] = (position[i][1] - pipe[pipe_segment][1])/h*start_radius
-        first_l_point[2] = (position[i][2] - pipe[pipe_segment][2])/h*start_radius
         second_l_point = cuda.local.array(3, np.double)
+        first_l_point[0] = pipe[pipe_segment][0] + start_radius
         second_l_point[0] = pipe[pipe_segment][0] + end_radius
-        second_l_point[1] = (position[i][1] - pipe[pipe_segment][1])/h*end_radius
-        second_l_point[2] = (position[i][2] - pipe[pipe_segment][2])/h*end_radius
+        for dim in range(1, 3):
+            first_l_point[dim] = (position[dim] - pipe[pipe_segment][dim])/h*start_radius
+            second_l_point[dim] = (position[dim] - pipe[pipe_segment][dim])/h*end_radius
 
         for dim in range(0, 3):
             edge_vector[dim] = second_l_point[dim]-first_l_point[dim]
 
-        t = calc_collision_move_vector_length(first_l_point, edge_vector, position[i], speed[i])
+        t = calc_collision_move_vector_length(first_l_point, edge_vector, position, speed)
 
         collision_point = cuda.local.array(3, np.double)
         for dim in range(0, 3):
             collision_point = position[i][dim] - speed[i][dim]*t
+
+        sum_vector = calc_summary_vector()
+        for dim in range(0, 3):
+            speed[i][dim] = sum_vector - speed[i][dim]
+
+        way_after_collision = 0
+        for dim in range(0, 3):
+            way_after_collision = way_after_collision + (position[dim] - collision_point[dim])**2
+        way_after_collision = way_after_collision**0.5
+
+        speed_vec_length = 0
+        for dim in range(1, 3):
+            speed_vec_length = speed_vec_length+speed[dim]**2
+        speed_vec_length = speed_vec_length**0.5
+
+        for dim in range(1, 3):
+            position[dim] = collision_point[dim] + speed[dim]*way_after_collision/speed_vec_length
 
 
 @cuda.jit()
@@ -148,7 +199,7 @@ def collision_kernel(
         return
 
     if is_out_of_pipe(position[i], pipe, pipe_index):
-        solve_collision(position, velocity, i, pipe, pipe_index)
+        solve_collision(position[i], velocity[i], pipe, pipe_index)
 
 
 @cuda.jit()
