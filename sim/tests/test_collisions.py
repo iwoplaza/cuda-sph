@@ -1,7 +1,7 @@
 import unittest
 
-from sim.src.main.physics.sph.base_strategy.base_kernels import *
-from common.main.data_classes.pipe_builder import PipeBuilder
+from sim.src.sph.kernels.base_kernels import *
+from common.pipe_builder import PipeBuilder
 
 
 @cuda.jit
