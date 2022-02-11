@@ -1,9 +1,14 @@
 from common.main.data_classes.simulation_data_classes import SimulationState, SimulationParameters
+from sim.src.main.physics import constants
 from sim.src.main.physics.sph.base_strategy.abstract_sph_strategy import AbstractSPHStrategy
-import sim.src.main.physics.sph.voxel_strategy.kernels as kernels
+import sim.src.main.physics.sph.voxel_strategy.voxel_kernels as kernels
 from numba import cuda
 import numpy as np
 import math
+from sim.src.main.physics.sph.voxel_strategy import voxel_kernels
+
+
+# TODO: it has some weird bug with CUDA memory does not work with more than ~10 particles (XD)
 
 
 class VoxelSPHStrategy(AbstractSPHStrategy):
@@ -13,12 +18,59 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
 
     def _initialize_computation(self):
         super()._send_arrays_to_gpu()
-        self._organize_voxels()
+        self.__organize_voxels()
+        self.__initialize_space_dim()
 
-    def _organize_voxels(self):
+    def _compute_density(self):
+        voxel_kernels.density_kernel[self.grid_size, self.block_size](
+            self.d_new_density,
+            self.d_position,
+            self.d_voxel_begin,
+            self.d_voxel_particle_map,
+            self.d_voxel_size,
+            self.d_space_dim,
+            constants.MASS,
+            constants.INF_R
+        )
+        cuda.synchronize()
+
+    def _compute_pressure(self):
+        voxel_kernels.pressure_kernel[self.grid_size, self.block_size](
+            self.d_new_pressure_term,
+            self.d_new_density,
+            self.d_position,
+            self.d_voxel_begin,
+            self.d_voxel_particle_map,
+            self.d_voxel_size,
+            self.d_space_dim,
+            constants.MASS,
+            constants.INF_R,
+            constants.K,
+            constants.RHO_0,
+        )
+        cuda.synchronize()
+
+    def _compute_viscosity(self):
+        voxel_kernels.viscosity_kernel[self.grid_size, self.block_size](
+            self.d_new_viscosity_term,
+            self.d_new_density,
+            self.d_position,
+            self.d_velocity,
+            self.d_voxel_begin,
+            self.d_voxel_particle_map,
+            self.d_voxel_size,
+            self.d_space_dim,
+            constants.MASS,
+            constants.INF_R,
+            constants.VISC,
+        )
+        cuda.synchronize()
+
+    def __organize_voxels(self):
         # assign voxel indices to particles
         space_size = self.params.space_size
         voxel_size = self.params.voxel_size
+        self.d_voxel_size = cuda.to_device(voxel_size)
         space_dims = np.asarray(
             [math.ceil(space_size[dim] / voxel_size[dim]) for dim in range(3)],
             dtype=np.int32
@@ -46,24 +98,6 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         self.__populate_voxel_begins()
         self.d_voxel_begin = cuda.to_device(self.voxel_begin)
 
-    def _compute_density(self):
-        pass
-
-    def _compute_pressure(self):
-        pass
-
-    def _compute_viscosity(self):
-        pass
-
-    def _integrate(self):
-        pass
-
-    def _collide(self):
-        pass
-
-    def _finalize_computation(self):
-        pass
-
     def __populate_voxel_begins(self):
         map_idx = 0
         for voxel_idx in range(len(self.voxel_begin)):
@@ -74,3 +108,11 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             if self.voxel_particle_map[map_idx][0] == voxel_idx:
                 self.voxel_begin[voxel_idx] = map_idx
         return
+
+    def __initialize_space_dim(self):
+        self.space_dim = np.asarray(
+            [np.int32(self.params.space_size[dim] / self.params.voxel_size[dim])
+             for dim in range(3)],
+            dtype=np.int32
+        )
+        self.d_space_dim = cuda.to_device(self.space_dim)

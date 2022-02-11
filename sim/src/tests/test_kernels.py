@@ -1,7 +1,6 @@
 # TODO: signatures of kernels has been changed. tests has to be updated
 # TODO 2: actually lots of things changed, tests are outdated
 # :(
-import math
 
 import pytest
 import numpy as np
@@ -11,9 +10,8 @@ from common.main.data_classes.simulation_data_classes import SimulationParameter
 from sim.src.main.physics import constants
 from sim.src.main.physics.constants import INF_R as H
 from sim.src.main.physics.sph import VoxelSPHStrategy
-from sim.src.main.physics.sph.naive_strategy import kernels as naive_kernels
-from sim.src.main.physics.sph.voxel_strategy import kernels as voxel_kernels
-from sim.src.main.physics.sph.voxel_strategy.kernels import get_neighbours
+from sim.src.main.physics.sph.naive_strategy import naive_kernels as naive_kernels
+from sim.src.main.physics.sph.voxel_strategy.voxel_kernels import get_neighbours
 
 
 N_ELEMENTS = 1000
@@ -208,8 +206,6 @@ def sph2():
 
 @cuda.jit
 def get_neighbours_kernel(
-        voxel,
-        neigh_voxels,
         neigh_count,
         neighbours,
         p_idx,
@@ -220,8 +216,6 @@ def get_neighbours_kernel(
         voxel_particle_map
 ):
     neigh_count[0] = get_neighbours(
-        voxel,
-        neigh_voxels,
         neighbours,
         p_idx,
         position,
@@ -237,20 +231,14 @@ def test_get_neighbours(sph2):
         distance between them is less than INF_R"""
     MAX_NEIGHBOURS = 32
     d_neigh_count = cuda.to_device(np.asarray([-1], dtype=np.int32))
-    voxel_neighbours = np.asarray([-1 for _ in range(27)], dtype=np.int32)
-    d_voxel_neighbours = cuda.to_device(voxel_neighbours)
     neighbours = np.asarray([-1 for _ in range(MAX_NEIGHBOURS)], dtype=np.int32)
     d_neighbours = cuda.to_device(neighbours)
-    voxel = np.asarray([-1 for _ in range(3)], dtype=np.int32)
-    d_voxel = cuda.to_device(voxel)
     space_dim = np.asarray(
         [np.int32(sph2.params.space_size[dim] / sph2.params.voxel_size[dim])
          for dim in range(3)],
         dtype=np.int32
     )
     get_neighbours_kernel[1, 1](
-        d_voxel,
-        d_voxel_neighbours,
         d_neigh_count,
         d_neighbours,
         3,
@@ -262,13 +250,7 @@ def test_get_neighbours(sph2):
     )
     neigh_count = d_neigh_count.copy_to_host()[0]
     neighbours = d_neighbours.copy_to_host()
-    voxel_neighbours = d_voxel_neighbours.copy_to_host()
-    voxel = d_voxel.copy_to_host()
-    print("\n")
-    print("Voxel: ", voxel.tolist())
-    print("Neighbours: ", neighbours.tolist())
-    print("Voxel neighbours: ", voxel_neighbours.tolist())
-    assert voxel.all() == np.asarray([1, 1, 1], dtype=np.int32).all()
+    # print("\nNeighbours: ", neighbours.tolist())
     assert neigh_count == 3
     assert 0 not in neighbours
     assert 1 not in neighbours
