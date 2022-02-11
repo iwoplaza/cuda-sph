@@ -4,7 +4,7 @@ import numpy as np
 from typing import Tuple, List
 from sim.src.constants import INF_R
 
-DEFAULT_N_PARTICLES = 1_024 * 12
+DEFAULT_N_PARTICLES = 100_000
 DEFAULT_SPACE_SIDE_LENGTH = 20 * INF_R
 DEFAULT_VOXEL_SIDE_LENGTH = INF_R
 
@@ -40,9 +40,9 @@ class Pipe:
 @dataclass
 class SimulationParameters:
     n_particles: np.int32 = DEFAULT_N_PARTICLES
-    external_force: np.ndarray = np.array([0.5, 0, 0], dtype=np.float64)  # (x,y,z)
-    simulation_duration: np.int32 = 2  # in seconds
-    fps: np.int32 = 2
+    external_force: np.ndarray = np.array([50.5, 0, 0], dtype=np.float64)  # (x,y,z)
+    simulation_duration: np.int32 = 1  # in seconds
+    fps: np.int32 = 6
     pipe: Pipe = Pipe(segments=[Segment()])
     space_size: np.ndarray = np.array([DEFAULT_SPACE_SIDE_LENGTH for _ in range(3)], dtype=np.float64)  # (x,y,z)
     voxel_size: np.ndarray = np.array([DEFAULT_VOXEL_SIDE_LENGTH for _ in range(3)], dtype=np.float64)  # (x,y,z)
