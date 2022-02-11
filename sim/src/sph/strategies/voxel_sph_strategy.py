@@ -8,9 +8,6 @@ from sim.src import constants
 from sim.src.sph.kernels import voxel_kernels
 
 
-# TODO: it has some weird bug with CUDA memory does not work with more than ~10 particles (XD)
-
-
 class VoxelSPHStrategy(AbstractSPHStrategy):
 
     def __init__(self, params: SimulationParameters):

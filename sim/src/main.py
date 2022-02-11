@@ -23,22 +23,22 @@ if __name__ == '__main__':
     print(f"Thread layout: grid size {generator.sph_strategy.grid_size}, "
           f"block size {generator.sph_strategy.block_size}")
 
-    # for state in generator:
-    #     saver.save_next_state(state)
+    for state in generator:
+        saver.save_next_state(state)
 
     # TMP:
-    space_size = generator.sph_strategy.params.space_size
-    finished = False
-    while not finished:
-        state: SimulationState
-        try:
-            print("\n")
-            print(timeit(lambda: generator.__next__(), number=1))
-            # look at one of the particles
-            pos = generator.sph_strategy.old_state.position[0]
-            pos_normalized = [pos[i] / space_size[i] for i in range(3)]
-            print(f"1st particle position: {pos_normalized}")
-        except StopIteration:
-            finished = True
+    # space_size = generator.sph_strategy.params.space_size
+    # finished = False
+    # while not finished:
+    #     state: SimulationState
+    #     try:
+    #         print("\n")
+    #         print(timeit(lambda: generator.__next__(), number=1))
+    #         # look at one of the particles
+    #         pos = generator.sph_strategy.old_state.position[0]
+    #         pos_normalized = [pos[i] / space_size[i] for i in range(3)]
+    #         print(f"1st particle position: {pos_normalized}")
+    #     except StopIteration:
+    #         finished = True
 
     print("Simulation finished.")
