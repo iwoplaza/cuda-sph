@@ -11,15 +11,15 @@ DEFAULT_VOXEL_SIDE_LENGTH = INF_R
 
 @dataclass
 class Segment:
-    start_point: Tuple[np.float64, np.float64, np.float64] = (0, 0, 0)
-    start_radius: np.float64 = 1
-    end_radius: np.float64 = 1
-    length: np.float64 = 1
+    start_point: Tuple[np.float64, np.float64, np.float64] = (0.0, 0.0, 0.0)
+    start_radius: np.float64 = 1.0
+    end_radius: np.float64 = 1.0
+    length: np.float64 = 1.0
 
     def to_numpy(self) -> np.ndarray:
         segment_values = list(self.start_point)
         segment_values.extend([self.start_radius, self.length])
-        return np.array(segment_values)
+        return np.array(segment_values, dtype=np.float64)
 
 
 @dataclass
