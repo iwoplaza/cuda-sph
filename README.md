@@ -24,11 +24,11 @@ pip install -r ./requirements.txt
     - Zapis/odczyt danych o symulacji z pliku (Parametry symulacji, stan względny od czasu) [Paweł]
     - Definicja rurki: { origin: vec3, radius: float } [Paweł/Iwo]
 - Symulacja
-    - DONE Szkietet programu [Maciej/Tomek] 
-    - DONE Kernele (przynajmniej zarys) [Maciej/Tomek]
-    - DONE podłączenie do serializera
-    - Obliczenie efektywnego podzialu na gridy i bloki CUDA'y, korzystając z informacji nt. podpiętych device'ów
-    - Optymalizacja przeszukiwania n^2 za pomocą sąsiadów/voxeli
+    - **DONE**> Szkietet programu [Maciej/Tomek] 
+    - **DONE**> Kernele (przynajmniej zarys) [Maciej/Tomek]
+    - **DONE**> podłączenie do serializera
+    - **DONE**> Obliczenie efektywnego podzialu na gridy i bloki CUDA'y, korzystając z informacji nt. podpiętych device'ów
+    - **DONE**> Optymalizacja przeszukiwania n^2 za pomocą sąsiadów/voxeli
     - obsłużenie odbijania się od rurki
 - Wizualizer [Iwo]
     - **DONE**> Szkielet projektu
