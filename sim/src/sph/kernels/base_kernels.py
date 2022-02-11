@@ -85,12 +85,12 @@ def calc_collision_move_vector_length(l_point, l_vector, p_point, p_vector) -> n
     # rare example where nominator is always 0
     for dim in range(0, 3):
         if l_vector[dim] == 0 and p_vector[dim] != 0:
-            return (l_point[dim]-p_point) / p_vector[dim]
-    print("Cannot cals collision point")
+            return (l_point[dim]-p_point[dim]) / p_vector[dim]
+    return 0
 
 
 @cuda.jit(device=True)
-def calc_summary_vector(l_vector, p_vector):
+def calc_summary_vector(l_vector, p_vector, summary_vector):
     scalar = 0
     for dim in range(0, 3):
         scalar = scalar + l_vector[dim]*p_vector[dim]
@@ -98,10 +98,8 @@ def calc_summary_vector(l_vector, p_vector):
     p_vector_length = (l_vector[0] ** 2 + l_vector[1] ** 2 + l_vector[2] ** 2) ** 0.5
     cos_value = scalar / (l_vector_length + p_vector_length)
 
-    summary_vector = cuda.local.array(3, np.double)
     for dim in range(0, 3):
         summary_vector[dim] = l_vector[dim]/l_vector_length*cos_value
-    return summary_vector
 
 
 @cuda.jit(device=True)
@@ -110,7 +108,6 @@ def calc_vector_length(vector):
     for i in range(0, len(vector)):
         length += vector[i]**2
     return math.sqrt(length)
-
 
 
 @cuda.jit(device=True)
@@ -122,7 +119,7 @@ def calc_distance_between_points(first, second):
 
 
 @cuda.jit(device=True)
-def solve_collision(position, speed, i, pipe, pipe_segment):
+def solve_collision(position, speed, pipe, pipe_segment):
     start_radius = pipe[pipe_segment][3]
     end_radius = pipe[pipe_segment + 1][3]
     y_norm = position[1] - pipe[pipe_segment][1]
@@ -136,14 +133,14 @@ def solve_collision(position, speed, i, pipe, pipe_segment):
 
         collision_point = cuda.local.array(3, np.double)  # calculating collision point
         for dim in range(0, 3):
-            collision_point[dim] = position[dim] + speed[i][dim]*t
+            collision_point[dim] = position[dim] + speed[dim]*t
 
-        way_after_collision = calc_distance_between_points(position, collision_point, 3)
+        way_after_collision = calc_distance_between_points(position, collision_point)
 
         for dim in range(1, 3):
             speed[dim] = -speed[dim]
 
-        speed_vec_length = calc_vector_length(speed, 3)
+        speed_vec_length = calc_vector_length(speed)
 
         for dim in range(1, 3):
             position[dim] = collision_point[dim] + speed[dim]*way_after_collision/speed_vec_length
@@ -164,18 +161,20 @@ def solve_collision(position, speed, i, pipe, pipe_segment):
 
         collision_point = cuda.local.array(3, np.double)
         for dim in range(0, 3):
-            collision_point = position[i][dim] - speed[i][dim]*t
+            collision_point[dim] = position[dim] - speed[dim]*t
 
-        sum_vector = calc_summary_vector()
+        summary_vector = cuda.local.array(3, np.double)
+        calc_summary_vector(edge_vector, speed, summary_vector)
+
         for dim in range(0, 3):
-            speed[i][dim] = sum_vector - speed[i][dim]
+            speed[dim] = summary_vector[dim] - speed[dim]
 
-        way_after_collision = 0
+        way_after_collision = 0.0
         for dim in range(0, 3):
             way_after_collision = way_after_collision + (position[dim] - collision_point[dim])**2
         way_after_collision = way_after_collision**0.5
 
-        speed_vec_length = 0
+        speed_vec_length = 0.0
         for dim in range(1, 3):
             speed_vec_length = speed_vec_length+speed[dim]**2
         speed_vec_length = speed_vec_length**0.5

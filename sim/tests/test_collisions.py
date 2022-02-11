@@ -5,7 +5,7 @@ from common.pipe_builder import PipeBuilder
 
 
 @cuda.jit
-def test_find_segment_kernel(
+def find_segment_kernel(
         index,
         position,
         pipe
@@ -15,7 +15,7 @@ def test_find_segment_kernel(
 
 
 @cuda.jit
-def test_calc_vector_length_kernel(
+def calc_vector_length_kernel(
         lengths,
         vectors
 ):
@@ -24,7 +24,7 @@ def test_calc_vector_length_kernel(
 
 
 @cuda.jit
-def test_calc_distance_between_points_kernel(
+def calc_distance_between_points_kernel(
         lengths,
         first,
         second
@@ -34,7 +34,7 @@ def test_calc_distance_between_points_kernel(
 
 
 @cuda.jit
-def test_calc_x_at_segment_beginning_kernel(
+def calc_x_at_segment_beginning_kernel(
         results,
         pipe,
         pipe_segments
@@ -44,7 +44,7 @@ def test_calc_x_at_segment_beginning_kernel(
 
 
 @cuda.jit
-def test_is_out_of_pipe_kernel(
+def is_out_of_pipe_kernel(
         results,
         positions,
         pipe,
@@ -52,6 +52,32 @@ def test_is_out_of_pipe_kernel(
 ):
     for i in range(len(results)):
         results[i] = is_out_of_pipe(positions[i], pipe, pipe_segments[i])
+
+
+@cuda.jit
+def calc_collision_move_vector_length_kernel(
+        results,
+        l_points,
+        l_vectors,
+        p_points,
+        p_vectors
+):
+    for i in range(len(results)):
+        results[i] = calc_collision_move_vector_length(l_points[i], l_vectors[i], p_points[i], p_vectors[i])
+
+
+@cuda.jit
+def collisions_resolution_kernel(
+        results,
+        positions,
+        speed,
+        pipe,
+        pipe_segments
+):
+    i = get_index()
+    pipe_segments[i] = find_segment(positions[i], pipe)
+    solve_collision(positions[i], speed[i], pipe, pipe_segments[i])
+    results[i] = is_out_of_pipe(positions[i], pipe, pipe_segments[i])
 
 
 class CollisionTests(unittest.TestCase):
@@ -68,7 +94,7 @@ class CollisionTests(unittest.TestCase):
         d_position = cuda.to_device(position)
         d_result = cuda.to_device(result)
 
-        test_find_segment_kernel[1, 1](d_result, d_position, d_pipe)
+        find_segment_kernel[1, 1](d_result, d_position, d_pipe)
         cuda.synchronize()
         result = d_result.copy_to_host()
         expected = np.array([-1, 0, 1, 2, -1], dtype=np.float64)
@@ -80,7 +106,7 @@ class CollisionTests(unittest.TestCase):
 
         d_vectors = cuda.to_device(vectors)
         d_result = cuda.to_device(result)
-        test_calc_vector_length_kernel[1, 1](d_result, d_vectors)
+        calc_vector_length_kernel[1, 1](d_result, d_vectors)
         cuda.synchronize()
         result = d_result.copy_to_host()
         expected = np.array([8**0.5, 3**0.5], dtype=np.float64)
@@ -95,7 +121,7 @@ class CollisionTests(unittest.TestCase):
         d_second = cuda.to_device(second)
         d_result = cuda.to_device(result)
 
-        test_calc_distance_between_points_kernel[1, 1](d_result, d_first, d_second)
+        calc_distance_between_points_kernel[1, 1](d_result, d_first, d_second)
         cuda.synchronize()
         result = d_result.copy_to_host()
         print(result)
@@ -115,7 +141,7 @@ class CollisionTests(unittest.TestCase):
         d_pipe_segments = cuda.to_device(pipe_segments)
         d_result = cuda.to_device(np.array([-1, -1, -1], dtype=np.float64))
 
-        test_calc_x_at_segment_beginning_kernel[1, 1](d_result, d_pipe, d_pipe_segments)
+        calc_x_at_segment_beginning_kernel[1, 1](d_result, d_pipe, d_pipe_segments)
         cuda.synchronize()
         result = d_result.copy_to_host()
         print(result)
@@ -139,7 +165,7 @@ class CollisionTests(unittest.TestCase):
         d_segments = cuda.to_device(segments)
         d_result = cuda.to_device(results)
 
-        test_is_out_of_pipe_kernel[1, 1](d_result, d_positions, d_pipe, d_segments)
+        is_out_of_pipe_kernel[1, 1](d_result, d_positions, d_pipe, d_segments)
         cuda.synchronize()
         result = d_result.copy_to_host()
         print(d_positions.copy_to_host())
@@ -149,6 +175,51 @@ class CollisionTests(unittest.TestCase):
                              False, True, False], dtype=np.bool_)
         print(expected)
         self.assertTrue(np.all(result == expected))
+
+    def test_calc_collision_move_vector_length(self):
+        l_points = np.array([[1, 2, 3], [1, 1, 1]], dtype=np.float64)
+        l_vectors = np.array([[3, 2, 1], [0, 0, 4]], dtype=np.float64)
+        p_points = np.array([[8, -5, 2], [4, 1, 5]], dtype=np.float64)
+        p_vectors = np.array([[-4, 9, 2], [-3, 0, 0]], dtype=np.float64)
+        result = np.array([0, 0], dtype=np.float64)
+
+        d_l_points = cuda.to_device(l_points)
+        d_l_vectors = cuda.to_device(l_vectors)
+        d_p_points = cuda.to_device(p_points)
+        d_p_vectors = cuda.to_device(p_vectors)
+        d_result = cuda.to_device(result)
+
+        calc_collision_move_vector_length_kernel[1, 1](d_result, d_l_points, d_l_vectors, d_p_points, d_p_vectors)
+        cuda.synchronize()
+        result = d_result.copy_to_host()
+        print(result)
+        expected = np.array([1, 1], dtype=np.float64)
+        print(expected)
+        self.assertTrue(np.all(result == expected))
+
+    def test_collision_resolution(self):
+        np.random.seed(43)
+        N = 64
+        positions = np.random.rand(N, 3).astype(np.float64)
+        speed = np.random.rand(N, 3).astype(np.float64)
+        pipe = PipeBuilder().add_increasing_segment(1.0, 2.0)\
+            .get_result()\
+            .to_numpy()
+        pipe_segments = np.array([-2]*N, dtype=np.int32)
+        print(pipe_segments.shape)
+        result = np.array([True]*N, dtype=np.bool_)
+
+        d_positions = cuda.to_device(positions)
+        d_speed = cuda.to_device(speed)
+        d_pipe = cuda.to_device(pipe)
+        d_pipe_segments = cuda.to_device(pipe_segments)
+        d_result = cuda.to_device(result)
+
+        collisions_resolution_kernel[1, N](d_result, d_positions, d_speed, d_pipe, d_pipe_segments)
+        cuda.synchronize()
+        result = d_result.copy_to_host()
+        print(result)
+        self.assertTrue(np.all(result))
 
 
 if __name__ == '__main__':
