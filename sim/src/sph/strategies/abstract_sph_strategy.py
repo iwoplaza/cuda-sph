@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numba import cuda
 from common.data_classes import SimulationState, SimulationParameters
-from sim.src import constants
+from config import MASS
 from sim.src.sph.kernels import base_kernels
 from sim.src.sph.kernels.base_kernels import collision_kernel_box
 import sim.src.sph.thread_layout as thread_layout
@@ -20,10 +20,12 @@ class AbstractSPHStrategy(ABC):
 
     def compute_next_state(self, old_state: SimulationState) -> SimulationState:
         self.old_state = old_state
+
         self._initialize_computation()
         self._compute_density()
         self._compute_pressure()
         self._compute_viscosity()
+
         self.__integrate()
         self.__collide()
         self.__finalize_computation()
@@ -69,7 +71,7 @@ class AbstractSPHStrategy(ABC):
             self.d_new_pressure_term,
             self.d_new_viscosity_term,
             self.dt,
-            constants.MASS,
+            MASS,
         )
         cuda.synchronize()
 

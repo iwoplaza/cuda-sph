@@ -2,6 +2,8 @@ from numba import cuda
 import numpy as np
 import math
 
+import config
+
 
 @cuda.jit(device=True)
 def get_index():
@@ -32,7 +34,7 @@ def integrating_kernel(
                 external_force[dim] +
                 pressure_term[i][dim] +
                 viscosity_term[i][dim]
-        )
+        ) * config.SCALE
         updated_velocity[i][dim] += result_force[dim] / MASS * DT
         updated_position[i][dim] += updated_velocity[i][dim] * DT
 
@@ -110,7 +112,6 @@ def calc_vector_length(vector):
     for i in range(0, len(vector)):
         length += vector[i]**2
     return math.sqrt(length)
-
 
 
 @cuda.jit(device=True)
@@ -215,10 +216,14 @@ def collision_kernel_box(
     if i >= position.shape[0]:
         return
 
-    for dim in range(3):            # tests against all 3 dimensions
-        if position[i][dim] < 0:    # check if it's colliding
-            position[i][dim] = 0    # statically move back inside
-            velocity[i][dim] *= -1  # flip velocity, to change the direction of movement
+    for dim in range(3):  # tests against all 3 dimensions
+        bounced = False
+        if position[i][dim] < 0:  # check if it's colliding
+            position[i][dim] = 0  # statically move back inside
+            bounced = True
         if position[i][dim] > space_size[dim]:  # same thing to the other side
             position[i][dim] = space_size[dim]
-            velocity[i][dim] *= -1
+            bounced = True
+        if bounced:
+            velocity[i][dim] *= -1  # flip velocity, to change the direction of movement
+            velocity[i][dim] *= config.DAMP  # add a little damping, to slow the particle down after collision

@@ -58,6 +58,7 @@ class LazySPHLoadingStrategy(LoadingStrategy):
 
         print(f"Epoch: {epoch + 1}/{self.end_frame + 1}")
         data = self.__loader.load_simulation_state(epoch)
+        # print(np.round(data.position[0], 2))
         self.latest_frame_data = data.position
         self.latest_frame_index = epoch
 

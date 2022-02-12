@@ -61,7 +61,7 @@ class Saver:
         """
         for name, value in vars(simulation_state).items():
             np.save(self.__folder_path + "/" + name + "_" + str(self.__current_epoch), value)
-        self.__current_epoch = self.__current_epoch + 1
+        self.__current_epoch += 1
 
 
 if __name__ == '__main__':

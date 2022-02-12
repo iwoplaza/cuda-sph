@@ -1,12 +1,9 @@
 import math
-from sim.src import constants
 from numba import cuda
 import numpy as np
 from math import sqrt
+from config import INF_R, NEIGHBOURING_VOXELS_COUNT, MAX_NEIGHBOURS
 from sim.src.sph.kernels.base_kernels import get_index
-
-MAX_NEIGHBOURS = 32
-NEIGHBOURING_VOXELS_COUNT = 27
 
 
 @cuda.jit(device=True)
@@ -26,7 +23,7 @@ def are_neighbours(p1, p2, positions):
         (positions[p1][0] - positions[p2][0]) ** 2 +
         (positions[p1][1] - positions[p2][1]) ** 2 +
         (positions[p1][2] - positions[p2][2]) ** 2
-    ) <= constants.INF_R
+    ) <= INF_R
 
 
 @cuda.jit(device=True)

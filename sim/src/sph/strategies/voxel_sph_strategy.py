@@ -1,10 +1,10 @@
 from common.data_classes import SimulationParameters
+from config import MASS, INF_R, K, RHO_0, VISC
 from sim.src.sph.strategies.abstract_sph_strategy import AbstractSPHStrategy
 import sim.src.sph.kernels.voxel_kernels as kernels
 from numba import cuda
 import numpy as np
 import math
-from sim.src import constants
 from sim.src.sph.kernels import voxel_kernels
 
 
@@ -26,8 +26,8 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            constants.MASS,
-            constants.INF_R
+            MASS,
+            INF_R
         )
         cuda.synchronize()
 
@@ -40,10 +40,10 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            constants.MASS,
-            constants.INF_R,
-            constants.K,
-            constants.RHO_0,
+            MASS,
+            INF_R,
+            K,
+            RHO_0,
         )
         cuda.synchronize()
 
@@ -57,9 +57,9 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            constants.MASS,
-            constants.INF_R,
-            constants.VISC,
+            MASS,
+            INF_R,
+            VISC,
         )
         cuda.synchronize()
 
