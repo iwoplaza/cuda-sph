@@ -1,4 +1,4 @@
-from vis.src.main.abstract.scene_components import PointField, Cube, Camera
+from vis.src.main.abstract.scene_components import PointField, Cube, Camera, WireCylinder
 from vis.src.main.vector import Vec3f
 
 
@@ -13,4 +13,7 @@ class SceneLayerContext:
         raise NotImplementedError()
 
     def create_camera(self, origin: Vec3f, yaw: float = None, pitch: float = None) -> Camera:
+        raise NotImplementedError()
+
+    def create_wire_cylinder(self, start: Vec3f, end: Vec3f, start_radius: float, end_radius: float) -> WireCylinder:
         raise NotImplementedError()

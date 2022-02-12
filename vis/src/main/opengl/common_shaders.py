@@ -1,6 +1,6 @@
 from typing import List
 
-from .shader import Shader, SceneShader, UISolidShader, load_shader_src_from_asset
+from .shader import Shader, SceneShader, SolidShader, UISolidShader, load_shader_src_from_asset
 
 
 class CommonShaders:
@@ -9,7 +9,7 @@ class CommonShaders:
     UI_SOLID: UISolidShader = None
 
     # Viewport
-    SOLID: SceneShader = None
+    SOLID: SolidShader = None
     POINT_FIELD: SceneShader = None
 
     @classmethod
@@ -28,7 +28,7 @@ class CommonShaders:
     def register_scene_shaders(cls) -> List[SceneShader]:
         shaders = []
 
-        cls.SOLID = SceneShader(**load_shader_src_from_asset('solid'))
+        cls.SOLID = SolidShader(**load_shader_src_from_asset('solid'))
         shaders.append(cls.SOLID)
 
         cls.POINT_FIELD = SceneShader(**load_shader_src_from_asset('point_field'))

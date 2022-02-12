@@ -49,6 +49,8 @@ class GLCube(Cube):
     def draw(self, deltaTime: float):
         self.shader.use()
 
+        self.shader.set_color((1, 0, 0, 1))
+
         self.angle += np.pi / 4 * deltaTime  # quarter-turn per second
 
         translation = glm.translate(glm.mat4(1), glm.vec3(*self.origin))
