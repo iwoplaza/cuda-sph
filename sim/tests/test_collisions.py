@@ -76,7 +76,8 @@ def collisions_resolution_kernel(
 ):
     i = get_index()
     pipe_segments[i] = find_segment(positions[i], pipe)
-    solve_collision(positions[i], speed[i], pipe, pipe_segments[i])
+    if is_out_of_pipe(positions[i], pipe, pipe_segments[i]):
+        solve_collision(positions[i], speed[i], pipe, pipe_segments[i])
     results[i] = is_out_of_pipe(positions[i], pipe, pipe_segments[i])
 
 
@@ -198,17 +199,16 @@ class CollisionTests(unittest.TestCase):
         self.assertTrue(np.all(result == expected))
 
     def test_collision_resolution(self):
-        np.random.seed(43)
-        N = 64
-        positions = np.random.rand(N, 3).astype(np.float64)
-        speed = np.random.rand(N, 3).astype(np.float64)
-        pipe = PipeBuilder().add_increasing_segment(1.0, 2.0)\
+        N = 1
+        positions = np.array([[1.3, 1.5, 0.0]], dtype=np.float64)
+        speed = np.array([[-0.5, 0, 0.]], dtype=np.float64)
+        pipe = PipeBuilder().add_increasing_segment(1, 1)\
+            .add_lessening_segment(2, 1.5)\
             .get_result()\
             .to_numpy()
         pipe_segments = np.array([-2]*N, dtype=np.int32)
-        print(pipe_segments.shape)
-        result = np.array([True]*N, dtype=np.bool_)
-
+        result = np.array([False]*N, dtype=np.bool_)
+        print(pipe)
         d_positions = cuda.to_device(positions)
         d_speed = cuda.to_device(speed)
         d_pipe = cuda.to_device(pipe)
@@ -218,8 +218,13 @@ class CollisionTests(unittest.TestCase):
         collisions_resolution_kernel[1, N](d_result, d_positions, d_speed, d_pipe, d_pipe_segments)
         cuda.synchronize()
         result = d_result.copy_to_host()
+        print(speed[0])
+        print(d_speed.copy_to_host()[0])
+        print(positions[0])
+        print(d_positions.copy_to_host()[0])
+
         print(result)
-        self.assertTrue(np.all(result))
+        self.assertFalse(np.all(result))
 
 
 if __name__ == '__main__':
