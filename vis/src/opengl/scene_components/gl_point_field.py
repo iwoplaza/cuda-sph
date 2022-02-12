@@ -1,7 +1,7 @@
 from typing import List
 
-from vis.src.main.abstract.scene_components import PointField
-from vis.src.main.vector import Vec3f
+from vis.src.abstract.scene_components import PointField
+from vis.src.vector import Vec3f
 from ..common_shaders import CommonShaders
 from OpenGL.GL import *
 from OpenGL.GLUT import *
@@ -15,8 +15,8 @@ class GLPointField(PointField):
     def __init__(self, origin: Vec3f, scale: Vec3f):
         super().__init__(origin=origin, scale=scale)
 
-        self.point_positions = []
         self.shader = CommonShaders.POINT_FIELD
+        self.point_count = 0
 
         # Tried without a shared VBO, didn't work, so have to pass at least a float.
         vertex_attributes = np.array([0], dtype=np.float32)
@@ -47,14 +47,14 @@ class GLPointField(PointField):
 
         glBindVertexArray(0)
 
-    def set_point_positions(self, positions: List[Vec3f]):
-        self.point_positions = positions[:MAX_PARTICLES]
-
-        arr = np.array([f for offset in self.point_positions for f in offset], dtype=np.float32)
+    def set_point_positions(self, positions: np.ndarray):
+        positions = np.asarray(positions, dtype=np.float32)
+        arr = positions.reshape(len(positions)*3)
+        self.point_count = len(positions)
 
         glBindBuffer(GL_ARRAY_BUFFER, self.instance_vbo)
         glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES * 3 * sizeof(GLfloat), None, GL_STREAM_DRAW)
-        glBufferSubData(GL_ARRAY_BUFFER, 0, len(arr) * sizeof(GLfloat), np.array(arr))
+        glBufferSubData(GL_ARRAY_BUFFER, 0, len(arr) * sizeof(GLfloat), arr)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
     def draw(self, delta_time: float):
@@ -67,7 +67,7 @@ class GLPointField(PointField):
         glBindVertexArray(self.vao)
         glEnableVertexAttribArray(0)
         glEnableVertexAttribArray(1)
-        glDrawArraysInstanced(GL_POINTS, 0, 1, len(self.point_positions))
+        glDrawArraysInstanced(GL_POINTS, 0, 1, self.point_count)
         glDisableVertexAttribArray(0)
         glDisableVertexAttribArray(1)
         glBindVertexArray(0)

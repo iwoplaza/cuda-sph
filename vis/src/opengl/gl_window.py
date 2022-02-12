@@ -4,7 +4,7 @@ import glm
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 
-from vis.src.main.abstract import Window
+from vis.src.abstract import Window
 from .common_shaders import CommonShaders
 from .shader import Shader, SceneShader
 from .scene_components import GLCamera

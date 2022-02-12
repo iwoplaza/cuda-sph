@@ -1,5 +1,5 @@
 from typing import Tuple
-from vis.src.main.color import Color
+from vis.src.color import Color
 
 
 class Font:

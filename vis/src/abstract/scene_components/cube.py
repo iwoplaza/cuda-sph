@@ -1,4 +1,4 @@
-from vis.src.main.vector import Vec3f
+from vis.src.vector import Vec3f
 from ..component import Component
 
 

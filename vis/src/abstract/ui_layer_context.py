@@ -1,5 +1,5 @@
 from typing import Tuple
-from vis.src.main.abstract.ui_components import Font, Button
+from vis.src.abstract.ui_components import Font, Button
 
 
 class UILayerContext:

@@ -1,5 +1,5 @@
-from vis.src.main.abstract.scene_components import PointField, Cube, Camera, WireCylinder
-from vis.src.main.vector import Vec3f
+from vis.src.abstract.scene_components import PointField, Cube, Camera, WireCylinder
+from vis.src.vector import Vec3f
 
 
 class SceneLayerContext:

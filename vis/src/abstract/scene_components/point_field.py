@@ -1,6 +1,5 @@
-from typing import List
-
-from vis.src.main.vector import Vec3f
+import numpy as np
+from vis.src.vector import Vec3f
 from ..component import Component
 
 
@@ -9,7 +8,7 @@ class PointField(Component):
         self.origin = origin
         self.scale = scale
 
-    def set_point_positions(self, positions: List[Vec3f]):
+    def set_point_positions(self, positions: np.ndarray):
         raise NotImplementedError()
 
     def draw(self, delta_time: float):

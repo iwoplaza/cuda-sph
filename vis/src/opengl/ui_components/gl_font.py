@@ -5,9 +5,9 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 import math
 import glm
-from vis.src.main.abstract.ui_components import Font
-from vis.src.main.color import Color
-from vis.src.main.opengl.common_shaders import CommonShaders
+from vis.src.abstract.ui_components import Font
+from vis.src.color import Color
+from vis.src.opengl.common_shaders import CommonShaders
 
 
 class GLFont(Font):

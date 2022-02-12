@@ -1,5 +1,5 @@
-from vis.src.main.abstract import SceneLayerContext
-from vis.src.main.vector import Vec3f
+from vis.src.abstract import SceneLayerContext
+from vis.src.vector import Vec3f
 from .scene_components import GLPointField, GLCube, GLCamera, GLWireCylinder
 from .gl_window import GLWindow
 

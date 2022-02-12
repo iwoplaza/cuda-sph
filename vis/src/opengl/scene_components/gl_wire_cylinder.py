@@ -3,9 +3,9 @@ import glm
 import numpy as np
 from OpenGL.GL import *
 
-from vis.src.main.abstract.scene_components import WireCylinder
-from vis.src.main.vector import Vec3f
-from vis.src.main.opengl.common_shaders import CommonShaders
+from vis.src.abstract.scene_components import WireCylinder
+from vis.src.vector import Vec3f
+from vis.src.opengl.common_shaders import CommonShaders
 
 
 class GLWireCylinder(WireCylinder):
