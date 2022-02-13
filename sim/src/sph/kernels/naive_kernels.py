@@ -1,15 +1,13 @@
-from sim.src.sph.kernels.base_kernels import get_index
+from config import INF_R, K, RHO_0, MASS, VISC
+from sim.src.sph.kernels.base_kernels import get_index, compute_w, norm, compute_grad_w, compute_lap_w
 from numba import cuda
 import numpy as np
-import math
 
 
 @cuda.jit
 def density_kernel(
         result_density: np.ndarray,
         position: np.ndarray,
-        MASS: np.float64,
-        INF_R: np.float64
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -17,19 +15,10 @@ def density_kernel(
 
     new_density = 0
     for j in range(result_density.shape[0]):
-        if j == i:
+        if j == i or norm(position[i], position[j]) > INF_R:
             continue
-        dist_norm = (
-                (position[i][0] - position[j][0]) ** 2
-                + (position[i][1] - position[j][1]) ** 2
-                + (position[i][2] - position[j][2]) ** 2
-        )
-        new_density += (
-                MASS
-                * (315 / 64 * np.pi * INF_R ** 9)
-                * (INF_R ** 2 - dist_norm) ** 3
-        )
-    result_density[i] = new_density
+        new_density += compute_w(position[i], position[j])
+    result_density[i] = new_density * MASS
 
 
 @cuda.jit
@@ -37,43 +26,29 @@ def pressure_kernel(
         result_pressure_term: np.ndarray,
         density: np.ndarray,
         position: np.ndarray,
-        MASS: np.float64,
-        INF_R: np.float64,
-        K: np.float64,
-        RHO_0: np.float64,
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
 
-    new_pressure_term = cuda.local.array(3, np.double)
+    new_pressure_term = cuda.local.array(3, np.float64)
+    for dim in range(3):
+        new_pressure_term[dim] = 0.0
+
     for j in range(density.shape[0]):
-        if j == i:
+        if j == i or norm(position[i], position[j]) > INF_R:
             continue
-        dist = cuda.local.array(3, np.double)
-        for dim in range(3):
-            dist[dim] = position[i][dim] - position[j][dim]
-        dist_norm = math.sqrt(
-            (position[i][0] - position[j][0]) ** 2
-            + (position[i][1] - position[j][1]) ** 2
-            + (position[i][2] - position[j][2]) ** 2
-        )
-        w_grad = (
-                (-45 / np.pi * INF_R ** 6)
-                * (INF_R - dist_norm ** 2)
-                / dist_norm
-        )
         p_i = K * (density[i] - RHO_0)
         p_j = K * (density[j] - RHO_0)
+        factor = p_i / density[i] ** 2 + p_j / density[j] ** 2
+        grad_w = cuda.local.array(3, np.float64)
+        compute_grad_w(position[i], position[j], grad_w)
+
         for dim in range(3):
-            new_pressure_term[dim] += (
-                    dist[dim]
-                    * MASS
-                    * (p_i / density[i] ** 2 + p_j / density[j] ** 2)
-                    * w_grad
-            )
+            new_pressure_term[dim] += factor * grad_w[dim]
+
     for dim in range(3):
-        result_pressure_term[i][dim] = new_pressure_term[dim]
+        result_pressure_term[i][dim] = new_pressure_term[dim] * MASS
 
 
 @cuda.jit
@@ -82,34 +57,25 @@ def viscosity_kernel(
         density: np.ndarray,
         position: np.ndarray,
         velocity: np.ndarray,
-        MASS: np.float64,
-        INF_R: np.float64,
-        VISC: np.float64,
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
 
     new_viscosity_term = cuda.local.array(3, np.double)
-    for j in range(density.shape[0]):
-        if j == i:
-            continue
-        dist = cuda.local.array(3, np.double)
-        velocity_diff = cuda.local.array(3, np.double)
-        for dim in range(3):
-            dist[dim] = position[i][dim] - position[j][dim]
-            velocity_diff[dim] = velocity[j][dim] - velocity[i][dim]
-        dist_norm = math.sqrt(
-            (position[i][0] - position[j][0]) ** 2
-            + (position[i][1] - position[j][1]) ** 2
-            + (position[i][2] - position[j][2]) ** 2
-        )
-        w_laplacian = (45 / np.pi * INF_R ** 6) * (INF_R - dist_norm ** 2)
-        for dim in range(3):
-            new_viscosity_term[dim] += (
-                    MASS * velocity_diff[dim] / density[j] * w_laplacian
-            )
     for dim in range(3):
-        result_viscosity_term[i][dim] = (
-                VISC * new_viscosity_term[dim] / density[i]
-        )
+        new_viscosity_term[dim] = 0.0
+
+    for j in range(density.shape[0]):
+        if j == i or norm(position[i], position[j]) > INF_R:
+            continue
+        visc_term_j = cuda.local.array(3, np.float64)
+        lap_w = compute_lap_w(position[i], position[j])
+        for dim in range(3):
+            visc_term_j[dim] = (velocity[j][dim] - velocity[i][dim]) / \
+                               density[j] * lap_w
+            new_viscosity_term[dim] += visc_term_j[dim] * \
+                                       MASS * VISC / density[i]
+
+    for dim in range(3):
+        result_viscosity_term[i][dim] = new_viscosity_term[dim]

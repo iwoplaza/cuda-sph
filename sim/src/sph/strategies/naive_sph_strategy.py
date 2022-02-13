@@ -1,6 +1,5 @@
 from common.data_classes import SimulationParameters
 from sim.src.sph.strategies.abstract_sph_strategy import AbstractSPHStrategy
-import sim.src.constants as constants
 from numba import cuda
 from sim.src.sph.kernels import naive_kernels
 
@@ -17,8 +16,6 @@ class NaiveSPHStrategy(AbstractSPHStrategy):
         naive_kernels.density_kernel[self.grid_size, self.block_size](
             self.d_new_density,
             self.d_position,
-            constants.MASS,
-            constants.INF_R
         )
         cuda.synchronize()
 
@@ -27,10 +24,6 @@ class NaiveSPHStrategy(AbstractSPHStrategy):
             self.d_new_pressure_term,
             self.d_new_density,
             self.d_position,
-            constants.MASS,
-            constants.INF_R,
-            constants.K,
-            constants.RHO_0,
         )
         cuda.synchronize()
 
@@ -40,9 +33,6 @@ class NaiveSPHStrategy(AbstractSPHStrategy):
             self.d_new_density,
             self.d_position,
             self.d_velocity,
-            constants.MASS,
-            constants.INF_R,
-            constants.VISC,
         )
         cuda.synchronize()
 

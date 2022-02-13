@@ -2,11 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, List
-from sim.src.constants import INF_R
-
-DEFAULT_N_PARTICLES = 100_000
-DEFAULT_SPACE_SIDE_LENGTH = 20 * INF_R
-DEFAULT_VOXEL_SIDE_LENGTH = INF_R
+import config
 
 
 @dataclass
@@ -39,26 +35,19 @@ class Pipe:
 
 @dataclass
 class SimulationParameters:
-    n_particles: np.int32 = DEFAULT_N_PARTICLES
-    external_force: np.ndarray = np.array([50.5, 0, 0], dtype=np.float64)  # (x,y,z)
-    simulation_duration: np.int32 = 1  # in seconds
-    fps: np.int32 = 6
+    n_particles: np.int32 = config.DEFAULT_N_PARTICLES
+    external_force: np.ndarray = config.DEFAULT_EXT_FORCE
+    simulation_duration: np.int32 = config.DEFAULT_DURATION  # in seconds
+    fps: np.int32 = config.DEFAULT_FPS
     pipe: Pipe = Pipe(segments=[Segment()])
-    space_size: np.ndarray = np.array([DEFAULT_SPACE_SIDE_LENGTH for _ in range(3)], dtype=np.float64)  # (x,y,z)
-    voxel_size: np.ndarray = np.array([DEFAULT_VOXEL_SIDE_LENGTH for _ in range(3)], dtype=np.float64)  # (x,y,z)
+    space_size: np.ndarray = config.DEFAULT_SPACE_SIZE
+    voxel_size: np.ndarray = config.DEFAULT_VOXEL_SIZE
 
 
 @dataclass
 class SimulationState:
-    position: np.ndarray = np.array(1)  # (n x 3)
-    velocity: np.ndarray = np.array(1)  # (n x 3)
-    density: np.ndarray = np.array(1)   # (n)
+    position: np.ndarray = None  # (n x 3)
+    velocity: np.ndarray = None  # (n x 3)
+    density:  np.ndarray = None  # (n)
 
-    def set_random_from_params(self, params):
-        # shuffle particles inside inside whole space (for fun)
-        self.position = np.random.random(params.n_particles * 3).reshape((params.n_particles, 3)).astype("float64")
-        for i in range(params.n_particles):
-            for dim in range(3):
-                self.position[i][dim] *= params.space_size[dim]
-        self.velocity = np.random.random(params.n_particles * 3).reshape((params.n_particles, 3)).astype("float64")
-        self.density = np.zeros(params.n_particles).astype("float64")
+

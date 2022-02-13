@@ -1,21 +1,20 @@
 from __future__ import annotations
-
-from timeit import timeit
-
+import numpy as np
+from common import start_states
 from state_generator import StateGenerator
-from common.data_classes import SimulationState, SimulationParameters
+from common.data_classes import SimulationParameters
 from common.serializer.saver import Saver
 
 if __name__ == '__main__':
 
     params = SimulationParameters()
-    start_state = SimulationState()
-    start_state.set_random_from_params(params)
+    start_state = start_states.pouring(params)
 
     saver = Saver("simulation_out", params)
     generator = StateGenerator(start_state, params)
 
     print(f"Running simulation with {params.n_particles} particles.")
+    print(f"Space size: {np.round(params.space_size, 2)}")
     print(f"Algorithm used: {generator.sph_strategy.__class__}")
     print(f"Duration time: {params.simulation_duration} seconds. "
           f"Framerate: {params.fps}. "
@@ -24,20 +23,22 @@ if __name__ == '__main__':
           f"block size {generator.sph_strategy.block_size}")
 
     for state in generator:
-        saver.save_next_state(state)
+        # saver.save_next_state(state)
+        print(f"pos: {np.round(state.position[0], 1).tolist()},"
+              f" vel: {np.round(state.velocity[0], 5).tolist()},"
+              f" force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")
 
-    # TMP:
+    # # TMP:
+    # from timeit import timeit
     # space_size = generator.sph_strategy.params.space_size
     # finished = False
     # while not finished:
     #     state: SimulationState
     #     try:
-    #         print("\n")
     #         print(timeit(lambda: generator.__next__(), number=1))
     #         # look at one of the particles
     #         pos = generator.sph_strategy.old_state.position[0]
-    #         pos_normalized = [pos[i] / space_size[i] for i in range(3)]
-    #         print(f"1st particle position: {pos_normalized}")
+    #         print(f"1st particle position: {np.round(pos, 3)}")
     #     except StopIteration:
     #         finished = True
 
