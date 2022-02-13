@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Tuple
 from common.data_classes import Pipe, Segment
 
@@ -18,7 +19,7 @@ class PipeBuilder:
         self.__first_segment = True
         self.__pipe: Pipe = Pipe(segments=[Segment()])
 
-    def with_starting_position(self, position: Tuple[float, float, float]) -> 'PipeBuilder':
+    def with_starting_position(self, position: Tuple[float, float, float]) -> PipeBuilder:
         """
         Sets centre point of first segment
 
@@ -29,7 +30,7 @@ class PipeBuilder:
         self.__pipe.segments[0].start_point = position
         return self
 
-    def with_starting_radius(self, radius: float) -> 'PipeBuilder':
+    def with_starting_radius(self, radius: float) -> PipeBuilder:
         """
         Sets radius at start of first segment
 
@@ -41,7 +42,7 @@ class PipeBuilder:
         self.__pipe.segments[0].start_radius = radius
         return self
 
-    def with_ending_radius(self, radius: float) -> 'PipeBuilder':
+    def with_ending_radius(self, radius: float) -> PipeBuilder:
         """
         Sets radius at ends of first segment
 
@@ -53,7 +54,7 @@ class PipeBuilder:
         self.__pipe.segments[0].end_radius = radius
         return self
 
-    def with_starting_length(self, length: float) -> 'PipeBuilder':
+    def with_starting_length(self, length: float) -> PipeBuilder:
         """
         Sets length of first segment
 
@@ -65,7 +66,7 @@ class PipeBuilder:
         self.__pipe.segments[0].length = length
         return self
 
-    def add_roller_segment(self, length) -> 'PipeBuilder':
+    def add_roller_segment(self, length) -> PipeBuilder:
         """
         Adds segment of specified length with
 
@@ -87,7 +88,7 @@ class PipeBuilder:
 
         return self
 
-    def add_lessening_segment(self, length, change) -> 'PipeBuilder':
+    def add_lessening_segment(self, length, change) -> PipeBuilder:
         """
         Adds a segment new segment which is a truncated cone with radius at end smaller than at start by a change
         factor
@@ -102,7 +103,7 @@ class PipeBuilder:
         self.__pipe.segments[-1].end_radius = self.__pipe.segments[-1].end_radius - change
         return self
 
-    def add_increasing_segment(self, length, change) -> 'PipeBuilder':
+    def add_increasing_segment(self, length, change) -> PipeBuilder:
         """
         Adds a new segment which is a truncated cone with radius at the end bigger than at the beginning by a change
         factor
@@ -114,6 +115,43 @@ class PipeBuilder:
         self.add_roller_segment(length)
         assert change > 0, self._NEGATIVE_CHANGE_MESSAGE
         self.__pipe.segments[-1].end_radius = self.__pipe.segments[-1].end_radius + change
+        return self
+
+    def transform(self, space_size_x: float, space_size_yz: float, max_radius: float = None) -> PipeBuilder:
+        """
+        Transform pipe to fit into .
+        - rescales lengths such that pipe goes from 0 to space_size in x axis
+        - y and z axis has values: space_size/2
+        - rays are rescaled that max has specified values
+
+        :param space_size_x: Length of space in x dimension
+        :param space_size_yz: Length of space in y and z dimensions
+        :param max_radius: Radius of the maximum radius after rescaling if None no rescale is done
+        """
+        total_length = 0.
+        for segment in self.__pipe.segments:
+            total_length += segment.length
+        length_scale = space_size_x/total_length
+        current_x = 0.
+        for segment in self.__pipe.segments:
+            segment.start_point = (current_x, space_size_yz/2, space_size_yz/2)
+            segment.length = segment.length*length_scale
+            current_x += segment.length
+
+        if not max_radius:
+            max_radius = space_size_yz/2
+
+        current_max_radius = 0.
+        for segment in self.__pipe.segments:
+            if segment.start_radius > current_max_radius:
+                current_max_radius = segment.start_radius
+            if segment.end_radius > current_max_radius:
+                current_max_radius = segment.end_radius
+        scale = max_radius / current_max_radius
+        print(scale)
+        for segment in self.__pipe.segments:
+            segment.start_radius = segment.start_radius * scale
+            segment.end_radius = segment.end_radius * scale
         return self
 
     def get_result(self) -> Pipe:

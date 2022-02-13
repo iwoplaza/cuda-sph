@@ -7,7 +7,7 @@ from common.pipe_builder import PipeBuilder
 import numpy as np
 
 
-class MyTestCase(unittest.TestCase):
+class PipeTests(unittest.TestCase):
 
     def test_segment_to_numpy(self):
         segment = Segment(start_radius=4.5)

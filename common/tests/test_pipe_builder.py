@@ -5,7 +5,7 @@ from common.data_classes import Segment, Pipe
 from common.pipe_builder import PipeBuilder
 
 
-class MyTestCase(unittest.TestCase):
+class PipeBuilderTests(unittest.TestCase):
 
     def test_basic_builder(self):
         pipe = PipeBuilder().get_result()
@@ -108,6 +108,29 @@ class MyTestCase(unittest.TestCase):
             PipeBuilder().add_lessening_segment(1, -1).get_result()
 
         self.assertTrue(type(error.exception) is AssertionError)
+
+    def test_pipe_transform(self):
+        pipe = PipeBuilder()\
+            .add_increasing_segment(2., 3.)\
+            .add_roller_segment(1.)\
+            .add_increasing_segment(2., 3.)\
+            .transform(600, 600, 70)\
+            .get_result()
+
+        expected_pipe_numpy = PipeBuilder()\
+            .with_starting_position((0., 300., 300.))\
+            .with_starting_radius(10.)\
+            .with_ending_radius(10.)\
+            .with_starting_length(100.)\
+            .add_increasing_segment(200., 30.)\
+            .add_roller_segment(100.)\
+            .add_increasing_segment(200., 30.)\
+            .get_result()\
+            .to_numpy()
+
+        print(pipe.to_numpy())
+        print(expected_pipe_numpy)
+        self.assertTrue(np.all(pipe.to_numpy() == expected_pipe_numpy))
 
 
 if __name__ == '__main__':
