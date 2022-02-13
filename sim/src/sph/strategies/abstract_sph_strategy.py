@@ -37,7 +37,7 @@ class AbstractSPHStrategy(ABC):
         self.__collide()
         self.__finalize_computation()
 
-        self.__next_state_log(self)
+        self.__next_state_log()
         return self.new_state
 
     @abstractmethod
