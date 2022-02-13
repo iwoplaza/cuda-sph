@@ -23,7 +23,10 @@ if __name__ == '__main__':
           f"block size {generator.sph_strategy.block_size}")
 
     for state in generator:
-        saver.save_next_state(state)
+        # saver.save_next_state(state)
+        print(f"pos: {np.round(state.position[0], 1).tolist()},"
+              f" vel: {np.round(state.velocity[0], 5).tolist()},"
+              f" force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")
 
     # # TMP:
     # from timeit import timeit

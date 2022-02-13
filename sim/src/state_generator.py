@@ -16,7 +16,8 @@ class StateGenerator:
             raise StopIteration
 
         print(f"Computing frame {self.current_frame_idx + 1}...")
-        self.current_state = self.sph_strategy.compute_next_state(self.current_state)
+        if self.current_frame_idx > 0:
+            self.current_state = self.sph_strategy.compute_next_state(self.current_state)
 
         self.current_frame_idx += 1
         return self.current_state

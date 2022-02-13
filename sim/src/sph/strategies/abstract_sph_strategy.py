@@ -17,6 +17,7 @@ class AbstractSPHStrategy(ABC):
         thread_setup = thread_layout.organize(params.n_particles)
         self.grid_size = thread_setup[0]
         self.block_size = thread_setup[1]
+        self.result_force = np.zeros((self.params.n_particles, 3)).astype(np.float64)
 
     def compute_next_state(self, old_state: SimulationState) -> SimulationState:
         self.old_state = old_state
@@ -55,6 +56,7 @@ class AbstractSPHStrategy(ABC):
         self.d_new_viscosity_term = cuda.to_device(np.zeros((self.params.n_particles, 3), dtype=np.float64))
         self.d_new_density = cuda.to_device(np.zeros(self.params.n_particles, dtype=np.float64))
         self.d_space_size = cuda.to_device(self.params.space_size)
+        self.d_result_force = cuda.to_device(self.result_force)
 
     def __finalize_computation(self):
         self.new_state = SimulationState(
@@ -62,16 +64,17 @@ class AbstractSPHStrategy(ABC):
             self.d_velocity.copy_to_host(),
             self.d_new_density.copy_to_host(),
         )
+        self.result_force = self.d_result_force.copy_to_host()
 
     def __integrate(self):
         base_kernels.integrating_kernel[self.grid_size, self.block_size](
+            self.d_result_force,
             self.d_position,
             self.d_velocity,
             self.d_external_force,
             self.d_new_pressure_term,
             self.d_new_viscosity_term,
             self.dt,
-            MASS,
         )
         cuda.synchronize()
 

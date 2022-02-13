@@ -26,8 +26,6 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            MASS,
-            INF_R
         )
         cuda.synchronize()
 
@@ -40,10 +38,6 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            MASS,
-            INF_R,
-            K,
-            RHO_0,
         )
         cuda.synchronize()
 
@@ -57,9 +51,6 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            MASS,
-            INF_R,
-            VISC,
         )
         cuda.synchronize()
 
