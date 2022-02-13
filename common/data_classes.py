@@ -36,39 +36,6 @@ class Pipe:
         to_stack.append(last)
         return np.stack(to_stack)
 
-    def transform(self, space_size: float, max_radius: float = None) -> None:
-        """
-        Transform pipe to fit into cube.
-        - rescales lengths such that pipe goes from 0 to space_size in x axis
-        - y and z axis has values: space_size/2
-        - rays are rescaled that max has specified values
-
-        :param space_size: Value of cube edge
-        :param max_radius: Radius of the maximum radius after rescaling if None no rescale is done
-        """
-        total_length = 0.
-        for segment in self.segments:
-            total_length += segment.length
-        length_scale = space_size/total_length
-        current_x = 0.
-        for segment in self.segments:
-            segment.start_point = (current_x, space_size/2, space_size/2)
-            segment.length = segment.length*length_scale
-            current_x += segment.length
-
-        if max_radius:
-            current_max_radius = 0.
-            for segment in self.segments:
-                if segment.start_radius > current_max_radius:
-                    current_max_radius = segment.start_radius
-                if segment.end_radius > current_max_radius:
-                    current_max_radius = segment.end_radius
-            scale = max_radius / current_max_radius
-            print(scale)
-            for segment in self.segments:
-                segment.start_radius = segment.start_radius * scale
-                segment.end_radius = segment.end_radius * scale
-
 
 @dataclass
 class SimulationParameters:

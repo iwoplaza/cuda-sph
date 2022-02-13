@@ -4,8 +4,8 @@ import numpy as np
 from numpy import array
 
 from common.data_classes import SimulationState, SimulationParameters, Segment
-from common.serializer import Loader
-from common.serializer import Saver
+from common.serializer.loader import Loader
+from common.serializer.saver import Saver
 
 
 def generate_simulation_state(params: SimulationParameters) -> SimulationState:
