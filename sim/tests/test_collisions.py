@@ -200,8 +200,8 @@ class CollisionTests(unittest.TestCase):
 
     def test_collision_resolution(self):
         N = 1
-        positions = np.array([[1.3, 1.5, 0.0]], dtype=np.float64)
-        speed = np.array([[-0.5, 0, 0.]], dtype=np.float64)
+        positions = np.array([[1.3, 1.5/2**0.5, 1.5/2**0.5]], dtype=np.float64)
+        speed = np.array([[-0.5, -0, 0.]], dtype=np.float64)
         pipe = PipeBuilder().add_increasing_segment(1, 1)\
             .add_lessening_segment(2, 1.5)\
             .get_result()\

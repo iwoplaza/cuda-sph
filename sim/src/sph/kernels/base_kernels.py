@@ -82,7 +82,7 @@ def calc_collision_move_vector_length(l_point, l_vector, p_point, p_vector) -> n
                 nominator = l_vector[dim1]*p_point[dim2] - l_vector[dim1]*l_point[dim2] -\
                             l_vector[dim2]*p_point[dim1] + l_vector[dim2]*l_point[dim1]
                 return nominator/denominator
-    # rare example where nominator is always 0
+    # rare example where denominator is always 0
     for dim in range(0, 3):
         if l_vector[dim] == 0 and p_vector[dim] != 0:
             return (l_point[dim]-p_point[dim]) / p_vector[dim]
@@ -146,7 +146,7 @@ def solve_collision(position, speed, pipe, pipe_segment):
             position[dim] = collision_point[dim] + speed[dim]*way_after_collision/speed_vec_length
 
     else:
-        first_l_point = cuda.local.array(3, np.double)  # punkty na prostej i jej wektor
+        first_l_point = cuda.local.array(3, np.double)
         second_l_point = cuda.local.array(3, np.double)
         first_l_point[0] = pipe[pipe_segment][0]
         second_l_point[0] = pipe[pipe_segment+1][0]
