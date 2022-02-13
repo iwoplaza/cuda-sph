@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numba import cuda
 from common.data_classes import SimulationState, SimulationParameters
-from config import MASS
 from sim.src.sph.kernels import base_kernels
 from sim.src.sph.kernels.base_kernels import collision_kernel_box
 import sim.src.sph.thread_layout as thread_layout
