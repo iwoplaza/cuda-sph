@@ -6,18 +6,23 @@ from numba import cuda
 import numpy as np
 import math
 from sim.src.sph.kernels import voxel_kernels
+from sim.src.sph.logging_utils import sph_stage_logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class VoxelSPHStrategy(AbstractSPHStrategy):
-
     def __init__(self, params: SimulationParameters):
         super().__init__(params)
 
+    @sph_stage_logger(logger)
     def _initialize_computation(self):
         super()._send_arrays_to_gpu()
         self.__organize_voxels()
         self.__initialize_space_dim()
 
+    @sph_stage_logger(logger)
     def _compute_density(self):
         voxel_kernels.density_kernel[self.grid_size, self.block_size](
             self.d_new_density,
@@ -29,6 +34,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         )
         cuda.synchronize()
 
+    @sph_stage_logger(logger)
     def _compute_pressure(self):
         voxel_kernels.pressure_kernel[self.grid_size, self.block_size](
             self.d_new_pressure_term,
@@ -41,6 +47,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         )
         cuda.synchronize()
 
+    @sph_stage_logger(logger)
     def _compute_viscosity(self):
         voxel_kernels.viscosity_kernel[self.grid_size, self.block_size](
             self.d_new_viscosity_term,
@@ -54,16 +61,18 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         )
         cuda.synchronize()
 
+    @sph_stage_logger(logger)
     def __organize_voxels(self):
         # assign voxel indices to particles
         space_size = self.params.space_size
         voxel_size = self.params.voxel_size
         self.d_voxel_size = cuda.to_device(voxel_size)
         space_dims = np.asarray(
-            [math.ceil(space_size[dim] / voxel_size[dim]) for dim in range(3)],
-            dtype=np.int32
+            [math.ceil(space_size[dim] / voxel_size[dim]) for dim in range(3)], dtype=np.int32
         )
-        d_voxels = cuda.to_device(np.zeros(self.params.n_particles, dtype=np.int32))  # new buffer for voxel indices
+        d_voxels = cuda.to_device(
+            np.zeros(self.params.n_particles, dtype=np.int32)
+        )  # new buffer for voxel indices
         kernels.assign_voxels_to_particles_kernel[self.grid_size, self.block_size](
             d_voxels,
             self.d_position,
@@ -86,6 +95,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         self.__populate_voxel_begins()
         self.d_voxel_begin = cuda.to_device(self.voxel_begin)
 
+    @sph_stage_logger(logger)
     def __populate_voxel_begins(self):
         map_idx = 0
         for voxel_idx in range(len(self.voxel_begin)):
@@ -97,10 +107,13 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
                 self.voxel_begin[voxel_idx] = map_idx
         return
 
+    @sph_stage_logger(logger)
     def __initialize_space_dim(self):
         self.space_dim = np.asarray(
-            [np.int32(self.params.space_size[dim] / self.params.voxel_size[dim])
-             for dim in range(3)],
-            dtype=np.int32
+            [
+                np.int32(self.params.space_size[dim] / self.params.voxel_size[dim])
+                for dim in range(3)
+            ],
+            dtype=np.int32,
         )
         self.d_space_dim = cuda.to_device(self.space_dim)

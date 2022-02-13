@@ -1,8 +1,11 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
 from typing import Tuple, List
 import config
+import logging 
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -39,9 +42,12 @@ class SimulationParameters:
     external_force: np.ndarray = config.DEFAULT_EXT_FORCE
     simulation_duration: np.int32 = config.DEFAULT_DURATION  # in seconds
     fps: np.int32 = config.DEFAULT_FPS
-    pipe: Pipe = Pipe(segments=[Segment()])
+    pipe: Pipe = field(default_factory=lambda: Pipe(segments=[Segment()]), repr=False)
     space_size: np.ndarray = config.DEFAULT_SPACE_SIZE
     voxel_size: np.ndarray = config.DEFAULT_VOXEL_SIZE
+
+    def __post_init__(self):
+        logger.info(f"SimulationParameters object has been initialized to: {self}")
 
 
 @dataclass
