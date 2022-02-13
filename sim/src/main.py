@@ -8,7 +8,7 @@ from common.serializer.saver import Saver
 if __name__ == '__main__':
 
     params = SimulationParameters()
-    start_state = start_states.scattered_in_box(params)
+    start_state = start_states.pouring(params)
 
     saver = Saver("simulation_out", params)
     generator = StateGenerator(start_state, params)
