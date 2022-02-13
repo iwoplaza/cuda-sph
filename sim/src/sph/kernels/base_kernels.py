@@ -1,6 +1,7 @@
 from numba import cuda
 import numpy as np
 import math
+import numba.cuda.random as random
 
 from config import W_CONST, INF_R_2, GRAD_W_CONST, INF_R, LAP_W_CONST, DAMP, MASS
 
@@ -76,10 +77,10 @@ def integrating_kernel(
     # perform numerical integration with 'dt' time step (in seconds)
     for dim in range(3):
         result_force[i][dim] = (
-                                    external_force[dim] +
-                                    -pressure_term[i][dim] +
-                                    viscosity_term[i][dim]
-                            )
+                external_force[dim] +
+                -pressure_term[i][dim] +
+                viscosity_term[i][dim]
+        )
         updated_velocity[i][dim] += result_force[i][dim] / MASS * DT
         updated_position[i][dim] += updated_velocity[i][dim] * DT
 
@@ -94,22 +95,28 @@ def calc_x_at_segment_beginning(pipe, pipe_segment):
 
 @cuda.jit(device=True)
 def is_out_of_pipe(position, pipe, pipe_segment):
-    start_radius = pipe[pipe_segment][3]
-    end_radius = pipe[pipe_segment + 1][3]
     y_norm = position[1] - pipe[pipe_segment][1]
     z_norm = position[2] - pipe[pipe_segment][2]
     h = (y_norm ** 2 + z_norm ** 2) ** 0.5
 
-    if start_radius == end_radius:
-        return h > start_radius
-    elif start_radius < end_radius:
+    radius_in_position = calc_radius_in_position(position, pipe, pipe_segment)
+    return h > radius_in_position
+
+
+@cuda.jit(device=True)
+def calc_radius_in_position(position, pipe, pipe_segment):
+    if pipe[pipe_segment][3] == pipe[pipe_segment + 1][3]:
+        return pipe[pipe_segment][3]
+    elif pipe[pipe_segment][3] < pipe[pipe_segment + 1][3]:
         delta = position[0] - calc_x_at_segment_beginning(pipe, pipe_segment)
-        truncated_length = pipe[pipe_segment][4] * start_radius / (end_radius - start_radius)
-        return h > start_radius * (1.0 + delta / truncated_length)
+        truncated_length = pipe[pipe_segment][4] * pipe[pipe_segment][3] / (pipe[pipe_segment + 1][3] -
+                                                                            pipe[pipe_segment][3])
+        return pipe[pipe_segment][3] * (1.0 + delta / truncated_length)
     else:
         delta = calc_x_at_segment_beginning(pipe, pipe_segment) + pipe[pipe_segment][4] - position[0]
-        truncated_length = pipe[pipe_segment][4] * end_radius / (start_radius - end_radius)
-        return h > end_radius * (1.0 + delta / truncated_length)
+        truncated_length = pipe[pipe_segment][4] * pipe[pipe_segment + 1][3] / (pipe[pipe_segment][3]
+                                                                                - pipe[pipe_segment + 1][3])
+        return pipe[pipe_segment + 1][3] * (1.0 + delta / truncated_length)
 
 
 @cuda.jit(device=True)
@@ -126,28 +133,27 @@ def calc_collision_move_vector_length(l_point, l_vector, p_point, p_vector) -> n
         for dim2 in range(dim1, 3):
             denominator = p_vector[dim1] * l_vector[dim2] - p_vector[dim2] * l_vector[dim1]
             if denominator != 0:
-                nominator = l_vector[dim1]*p_point[dim2] - l_vector[dim1]*l_point[dim2] -\
-                            l_vector[dim2]*p_point[dim1] + l_vector[dim2]*l_point[dim1]
-                return nominator/denominator
+                nominator = l_vector[dim1] * p_point[dim2] - l_vector[dim1] * l_point[dim2] - \
+                            l_vector[dim2] * p_point[dim1] + l_vector[dim2] * l_point[dim1]
+                return nominator / denominator
     # rare example where denominator is always 0
     for dim in range(0, 3):
         if l_vector[dim] == 0 and p_vector[dim] != 0:
-            return (l_point[dim]-p_point[dim]) / p_vector[dim]
-    return 0
+            return (l_point[dim] - p_point[dim]) / p_vector[dim]
+    return 0.0
 
 
 @cuda.jit(device=True)
 def calc_summary_vector(l_vector, p_vector, summary_vector):
     scalar = 0
     for dim in range(3):
-        scalar = scalar + l_vector[dim]*p_vector[dim]
+        scalar = scalar + l_vector[dim] * p_vector[dim]
     l_vector_length = calc_vector_length(l_vector)
     p_vector_length = calc_vector_length(p_vector)
     cos_value = scalar / (l_vector_length * p_vector_length)
 
     for dim in range(0, 3):
-        summary_vector[dim] = 2.0*l_vector[dim]/l_vector_length*cos_value*p_vector_length
-
+        summary_vector[dim] = 2.0 * l_vector[dim] / l_vector_length * cos_value * p_vector_length
 
 
 @cuda.jit(device=True)
@@ -180,8 +186,8 @@ def solve_collision(position, speed, pipe, pipe_segment):
         t = (position[1] / h * start_radius - position[1]) / speed[1]  # don't need for solving equation
 
         collision_point = cuda.local.array(3, np.double)  # calculating collision point
-        for dim in range(0, 3):
-            collision_point[dim] = position[dim] + speed[dim]*t
+        for dim in range(3):
+            collision_point[dim] = position[dim] + speed[dim] * t
 
         way_after_collision = calc_distance_between_points(position, collision_point)
 
@@ -197,25 +203,24 @@ def solve_collision(position, speed, pipe, pipe_segment):
         first_l_point = cuda.local.array(3, np.double)
         second_l_point = cuda.local.array(3, np.double)
         first_l_point[0] = pipe[pipe_segment][0]
-        second_l_point[0] = pipe[pipe_segment+1][0]
+        second_l_point[0] = pipe[pipe_segment + 1][0]
         for dim in range(1, 3):
             first_l_point[dim] = (position[dim] - pipe[pipe_segment][dim]) / h * start_radius
             second_l_point[dim] = (position[dim] - pipe[pipe_segment][dim]) / h * end_radius
 
-        for dim in range(0, 3):
+        for dim in range(3):
             edge_vector[dim] = second_l_point[dim] - first_l_point[dim]
 
         t = calc_collision_move_vector_length(first_l_point, edge_vector, position, speed)
 
         collision_point = cuda.local.array(3, np.double)
-        for dim in range(0, 3):
-            collision_point[dim] = position[dim] + speed[dim]*t
-
+        for dim in range(3):
+            collision_point[dim] = position[dim] + speed[dim] * t
 
         summary_vector = cuda.local.array(3, np.double)
         calc_summary_vector(edge_vector, speed, summary_vector)
 
-        for dim in range(0, 3):
+        for dim in range(3):
             speed[dim] = summary_vector[dim] - speed[dim]
 
         way_after_collision = calc_distance_between_points(position, collision_point)
@@ -223,15 +228,15 @@ def solve_collision(position, speed, pipe, pipe_segment):
         speed_vec_length = calc_vector_length(speed)
 
         for dim in range(3):
-            position[dim] = collision_point[dim] + speed[dim]*way_after_collision/speed_vec_length
-
+            position[dim] = collision_point[dim] + speed[dim] * way_after_collision / speed_vec_length
 
 
 @cuda.jit()
 def collision_kernel(
         position: np.ndarray,
         velocity: np.ndarray,
-        pipe: np.ndarray
+        pipe: np.ndarray,
+        rng_states
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -239,10 +244,10 @@ def collision_kernel(
 
     pipe_index = find_segment(position[i], pipe)
     if pipe_index == -1:  # element is outside
-        return
-
-    if is_out_of_pipe(position[i], pipe, pipe_index):
-        solve_collision(position[i], velocity[i], pipe, pipe_index)
+        put_particle_at_pipe_begin(position[i], velocity[i], janusz, pipe, rng_states, i)
+    else:
+        if is_out_of_pipe(position[i], pipe, pipe_index):
+            solve_collision(position[i], velocity[i], pipe, pipe_index)
 
 
 @cuda.jit()
@@ -269,3 +274,22 @@ def collision_kernel_box(
         if bounced:
             velocity[i][dim] *= -1  # flip velocity, to change the direction of movement
             velocity[i][dim] *= DAMP  # add a little damping, to slow the particle down after collision
+
+
+@cuda.jit(device=True)
+def rand_position_inside_pipe(position, pipe, rng_states, i):
+    pipe_segment = find_segment(position, pipe)
+    R = calc_radius_in_position(position, pipe, pipe_segment)
+    r = R * math.sqrt(random.xoroshiro128p_uniform_float64(rng_states, i))
+    theta = math.sqrt(random.xoroshiro128p_uniform_float64(rng_states, i)) * 2.0 * math.pi
+
+    position[1] = pipe[0][1] + r * math.cos(theta)
+    position[2] = pipe[0][2] + r * math.sin(theta)
+
+
+@cuda.jit(device=True)
+def put_particle_at_pipe_begin(position, speed, new_speed, pipe, rng_states, i):
+    position[0] = 0.0
+    rand_position_inside_pipe(position, pipe, rng_states, i)
+    for dim in range(3):
+        speed[dim] = new_speed[dim]
