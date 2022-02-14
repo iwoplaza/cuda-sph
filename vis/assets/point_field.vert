@@ -10,6 +10,6 @@ layout (location = 2) uniform mat4 uViewMat;
 void main()
 {
     gl_Position = uProjMat * uViewMat * uModelMat * vec4(inOffset, 1.0);
-    // gl_PointSize = min(max(1, 10/gl_Position.z), 10);
+    // gl_PointSize = min(max(1, 20/gl_Position.z), 13);
     gl_PointSize = 13;
 }

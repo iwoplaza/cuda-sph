@@ -38,7 +38,7 @@ class ViewportLayer(Layer):
 
         self.points = None
 
-    def update(self, delta_time: float):
+    def _update(self, delta_time: float):
         self.playback_manager.update(delta_time)
 
         self.points = self.playback_manager.get_current_state()
