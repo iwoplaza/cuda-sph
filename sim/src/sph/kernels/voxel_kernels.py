@@ -59,12 +59,15 @@ def get_neighbours(
                 if is_in:
                     neigh_voxels[i] = compute_1d_idx(neigh_voxel, space_dim)
                     i += 1
-    # for each neighbouring voxel...
-    neigh_idx = 0
+
+    # to all neighbouring voxels assign number of particles in it
+    # create accumulated array as well
+    particle_count_per_neigh_voxel = cuda.local.array(NEIGHBOURING_VOXELS_COUNT, np.int32)
+    accum_particle_count = cuda.local.array(NEIGHBOURING_VOXELS_COUNT, np.int32)
+    total_neigh_count = 0
     for i in neigh_voxels:
         if i == -1 or voxel_begin[i] == -1:
             continue
-        # ...find start and end of it in map...
         start = voxel_begin[i]
         next_voxel_idx = i + 1
         while voxel_begin[next_voxel_idx] == -1 and next_voxel_idx < len(voxel_begin):
@@ -74,15 +77,24 @@ def get_neighbours(
             if next_voxel_idx == len(voxel_begin)
             else voxel_begin[next_voxel_idx]
         )
-        # ... and add up to MAX_NEIGHBOURS particles from these voxels
-        for map_entry in range(start, end):
-            potential_neigh = voxel_particle_map[map_entry][1]
-            if are_neighbours(p_idx, potential_neigh, position):
-                neighbours[neigh_idx] = potential_neigh
-                neigh_idx += 1
-                if neigh_idx >= MAX_NEIGHBOURS:
-                    return neigh_idx
-    return neigh_idx
+        particle_count_in_this_voxel = end - start
+        total_neigh_count += particle_count_in_this_voxel
+        accum_particle_count[i] = total_neigh_count
+        particle_count_per_neigh_voxel[i] = particle_count_in_this_voxel
+
+    # get MAX_NEIGHBOURS random neighbours
+    for _ in range(MAX_NEIGHBOURS):
+
+
+    #     # ... and add up to MAX_NEIGHBOURS particles from these voxels
+    #     for map_entry in range(start, end):
+    #         potential_neigh = voxel_particle_map[map_entry][1]
+    #         if are_neighbours(p_idx, potential_neigh, position):
+    #             neighbours[neigh_idx] = potential_neigh
+    #             neigh_idx += 1
+    #             if neigh_idx >= MAX_NEIGHBOURS:
+    #                 return neigh_idx
+    # return neigh_idx
 
 
 @cuda.jit

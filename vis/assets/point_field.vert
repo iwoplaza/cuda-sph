@@ -11,5 +11,5 @@ void main()
 {
     gl_Position = uProjMat * uViewMat * uModelMat * vec4(inOffset, 1.0);
     // gl_PointSize = min(max(1, 10/gl_Position.z), 10);
-    gl_PointSize = 13;
+    gl_PointSize = 9;
 }

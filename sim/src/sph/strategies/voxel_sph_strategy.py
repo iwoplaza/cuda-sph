@@ -14,6 +14,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         super().__init__(params)
 
     def _initialize_computation(self):
+        self.rng_states = cuda.random.create_xoroshiro128p_states(1, seed=15190)
         super()._send_arrays_to_gpu()
         self.__organize_voxels()
         self.__initialize_space_dim()

@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     for state in generator:
         saver.save_next_state(state)
-        # print(f"\nComputing frame {generator.current_frame_idx + 1}...")
+        print(f"\nComputing frame {generator.current_frame_idx + 1}...")
         # print(f"pos: {np.round(state.position[0], 1).tolist()}, "
         #       f"vel: {np.round(state.velocity[0], 1).tolist()}, "
         #       f"dens: {np.round(generator.sph_strategy.tmp_density[0], 1)}, "
