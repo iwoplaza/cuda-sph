@@ -260,11 +260,11 @@ def collision_kernel_box(
 
     for dim in range(3):  # tests against all 3 dimensions
         bounced = False
-        if position[i][dim] < 0:  # check if it's colliding
-            position[i][dim] = 1e-3  # statically move back inside
+        if position[i][dim] < INF_R:  # check if it's colliding
+            position[i][dim] = INF_R  # statically move back inside
             bounced = True
-        if position[i][dim] > space_size[dim]:  # same thing to the other side
-            position[i][dim] = space_size[dim] - 1e-3
+        if position[i][dim] > space_size[dim] - INF_R:  # same thing to the other side
+            position[i][dim] = space_size[dim] - INF_R
             bounced = True
         if bounced:
             velocity[i][dim] *= -1  # flip velocity, to change the direction of movement

@@ -10,21 +10,31 @@ import sim.src.sph.thread_layout as thread_layout
 class AbstractSPHStrategy(ABC):
     def __init__(self, params: SimulationParameters):
         self.params = params
-        self.dt = 1 / self.params.n_particles
+        self.dt = 1 / self.params.fps
         self.old_state: SimulationState = None
         self.new_state: SimulationState = None
         thread_setup = thread_layout.organize(params.n_particles)
         self.grid_size = thread_setup[0]
         self.block_size = thread_setup[1]
         self.result_force = np.zeros((self.params.n_particles, 3)).astype(np.float64)
+        self.tmp_density = np.zeros(1)
+        self.tmp_pressure = np.zeros((1, 1))
+        self.tmp_visc_term = np.zeros((1, 1))
 
     def compute_next_state(self, old_state: SimulationState) -> SimulationState:
         self.old_state = old_state
 
         self._initialize_computation()
+
         self._compute_density()
+        # tmp, debug
+        self.tmp_density = self.d_new_density.copy_to_host()
         self._compute_pressure()
+        # tmp, debug
+        self.tmp_pressure = self.d_new_pressure_term.copy_to_host()
         self._compute_viscosity()
+        # tmp, debug:
+        self.tmp_visc_term = self.d_new_viscosity_term.copy_to_host()
 
         self.__integrate()
         self.__collide()

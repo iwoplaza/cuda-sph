@@ -11,13 +11,7 @@ def pouring(params: SimulationParameters) -> SimulationState:
         .reshape((params.n_particles, 3)) \
         .astype("float64")
     for i in range(params.n_particles):
-        position[i][1] *= params.space_size[1] * 0.1
-        # position[i][1] += params.space_size[1] * 0.6
-
-        position[i][0] *= params.space_size[0] * 0.1
-        # position[i][0] += params.space_size[0] * 0.9
-
-        position[i][2] *= params.space_size[2] * 0.1
+        position[i] *= params.space_size
 
     # set their moving direction ate the space's diagonal (and randomize it a bit)
     base_velocity = [-29.0, 0.0, 29.0]
@@ -27,7 +21,8 @@ def pouring(params: SimulationParameters) -> SimulationState:
         .astype("float64")
     for i in range(params.n_particles):
         for dim in range(3):
-            velocity[i][dim] = base_velocity[dim] + ((random.random() - 0.5) * offset_range)
+            # velocity[i][dim] = base_velocity[dim] + ((random.random() - 0.5) * offset_range)
+            velocity[i][dim] = 0.0
 
     # density is zero, due to the fact that it's always computed
     # based on distance between particles (we cannot arbitrarily set it)

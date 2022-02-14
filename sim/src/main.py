@@ -23,23 +23,13 @@ if __name__ == '__main__':
           f"block size {generator.sph_strategy.block_size}")
 
     for state in generator:
-        # saver.save_next_state(state)
-        print(f"pos: {np.round(state.position[0], 1).tolist()},"
-              f" vel: {np.round(state.velocity[0], 5).tolist()},"
-              f" force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")
-
-    # # TMP:
-    # from timeit import timeit
-    # space_size = generator.sph_strategy.params.space_size
-    # finished = False
-    # while not finished:
-    #     state: SimulationState
-    #     try:
-    #         print(timeit(lambda: generator.__next__(), number=1))
-    #         # look at one of the particles
-    #         pos = generator.sph_strategy.old_state.position[0]
-    #         print(f"1st particle position: {np.round(pos, 3)}")
-    #     except StopIteration:
-    #         finished = True
+        saver.save_next_state(state)
+        # print(f"\nComputing frame {generator.current_frame_idx + 1}...")
+        # print(f"pos: {np.round(state.position[0], 1).tolist()}, "
+        #       f"vel: {np.round(state.velocity[0], 1).tolist()}, "
+        #       f"dens: {np.round(generator.sph_strategy.tmp_density[0], 1)}, "
+        #       f"press: {np.round(generator.sph_strategy.tmp_pressure[0], 1)}, "
+        #       f"visc: {np.round(generator.sph_strategy.tmp_visc_term[0], 1)}, "
+        #       f"force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")
 
     print("Simulation finished.")

@@ -124,7 +124,7 @@ def density_kernel(
         space_dim, voxel_begin, voxel_particle_map
     )
 
-    new_density = 0
+    new_density = 0.0
     for j in neighbours[:neigh_count]:
         if j == i:
             continue
@@ -204,8 +204,7 @@ def viscosity_kernel(
         for dim in range(3):
             visc_term_j[dim] = (velocity[j][dim] - velocity[i][dim]) / \
                                density[j] * lap_w
-            new_viscosity_term[dim] += visc_term_j[dim] * \
-                                       MASS * VISC / density[i]
+            new_viscosity_term[dim] += visc_term_j[dim] / density[i]
 
     for dim in range(3):
-        result_viscosity_term[i][dim] = new_viscosity_term[dim]
+        result_viscosity_term[i][dim] = new_viscosity_term[dim] * MASS * VISC
