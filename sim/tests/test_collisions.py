@@ -81,6 +81,22 @@ def collisions_resolution_kernel(
     results[i] = is_out_of_pipe(positions[i], pipe, pipe_segments[i])
 
 
+@cuda.jit
+def test_rand_position_inside_pipe_kernel(
+        result,
+        positions,
+        pipe,
+        rng_states
+):
+    i = get_index()
+    if i >= len(result):
+        return
+
+    rand_position_inside_pipe(positions[i], pipe, rng_states, i)
+    pipe_segment = find_segment(positions[i], pipe)
+    result[i] = is_out_of_pipe(positions[i], pipe, pipe_segment)
+
+
 class CollisionTests(unittest.TestCase):
 
     def test_find_segment(self):
@@ -224,6 +240,25 @@ class CollisionTests(unittest.TestCase):
         print(d_positions.copy_to_host()[0])
 
         print(result)
+        self.assertFalse(np.all(result))
+
+    def test_rand_position_inside_pipe(self):
+        N = 16
+        positions = np.random.rand(N, 3).astype(np.float64)*3
+        pipe = PipeBuilder().add_increasing_segment(1, 1)\
+            .add_lessening_segment(1, 1.5)\
+            .get_result()\
+            .to_numpy()
+        result = np.array([False]*N, dtype=np.bool_)
+        d_positions = cuda.to_device(positions)
+        d_pipe = cuda.to_device(pipe)
+        d_result = cuda.to_device(result)
+        rng_states = random.create_xoroshiro128p_states(N, seed=43)
+
+        test_rand_position_inside_pipe_kernel[1, N](d_result, d_positions, d_pipe, rng_states)
+        cuda.synchronize()
+        result = d_result.copy_to_host()
+
         self.assertFalse(np.all(result))
 
 
