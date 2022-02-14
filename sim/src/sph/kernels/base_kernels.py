@@ -278,6 +278,9 @@ def collision_kernel_box(
 
 @cuda.jit(device=True)
 def rand_position_inside_pipe(position, pipe, rng_states, i):
+    """
+    Rand position inside pipe, use actual position_x point - so it should be rounded previously if need to be change
+    """
     pipe_segment = find_segment(position, pipe)
     R = calc_radius_in_position(position, pipe, pipe_segment)
     r = R * math.sqrt(random.xoroshiro128p_uniform_float64(rng_states, i))
@@ -289,6 +292,10 @@ def rand_position_inside_pipe(position, pipe, rng_states, i):
 
 @cuda.jit(device=True)
 def put_particle_at_pipe_begin(position, speed, pipe, rng_states, i):
+    """
+    Put particle at the beginning in the pipe, position y and z points are set randomly,
+    speed is set to [DEFAULT_SPEED, 0, 0]
+    """
     position[0] = 0.0
     rand_position_inside_pipe(position, pipe, rng_states, i)
 
