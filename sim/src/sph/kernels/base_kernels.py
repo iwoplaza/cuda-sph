@@ -291,7 +291,7 @@ def rand_position_inside_pipe(position, pipe, rng_states, i):
 
 
 @cuda.jit(device=True)
-def put_particle_at_pipe_begin(position, speed, pipe, rng_states, i):
+def put_particle_at_pipe_begin(position, velocity, pipe, rng_states, i):
     """
     Put particle at the beginning in the pipe, position y and z points are set randomly,
     speed is set to [DEFAULT_SPEED, 0, 0]
@@ -299,6 +299,23 @@ def put_particle_at_pipe_begin(position, speed, pipe, rng_states, i):
     position[0] = 0.0
     rand_position_inside_pipe(position, pipe, rng_states, i)
 
-    speed[0] = DEFAULT_SPEED
+    velocity[0] = DEFAULT_SPEED
     for dim in range(1, 3):
-        speed[dim] = 0
+        velocity[dim] = 0
+
+
+@cuda.jit()
+def spawn_particles_inside_pipe_kernel(
+        position: np.ndarray,
+        velocity: np.ndarray,
+        pipe: np.ndarray,
+        rng_states: np.ndarray
+):
+    """Sets all positions inside the pipe, and horizontal x direction
+        "used to initialize first state of simulation"""
+
+    i = get_index()
+    if i >= position.shape[0]:
+        return
+
+    put_particle_at_pipe_begin(position[i], velocity[i], pipe, rng_states, i)

@@ -2,22 +2,23 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numba import cuda
 from common.data_classes import SimulationState, SimulationParameters
-from config import MASS
+import numba.cuda.random as random
 from sim.src.sph.kernels import base_kernels
-from sim.src.sph.kernels.base_kernels import collision_kernel_box
+from sim.src.sph.kernels.base_kernels import collision_kernel, collision_kernel_box
 import sim.src.sph.thread_layout as thread_layout
 
 
 class AbstractSPHStrategy(ABC):
     def __init__(self, params: SimulationParameters):
         self.params = params
-        self.dt = 1 / self.params.n_particles
+        self.dt = 1 / self.params.fps
         self.old_state: SimulationState = None
         self.new_state: SimulationState = None
         thread_setup = thread_layout.organize(params.n_particles)
         self.grid_size = thread_setup[0]
         self.block_size = thread_setup[1]
         self.result_force = np.zeros((self.params.n_particles, 3)).astype(np.float64)
+        self.rng_states = random.create_xoroshiro128p_states(self.grid_size * self.block_size, seed=16435234)
 
     def compute_next_state(self, old_state: SimulationState) -> SimulationState:
         self.old_state = old_state
@@ -57,6 +58,7 @@ class AbstractSPHStrategy(ABC):
         self.d_new_density = cuda.to_device(np.zeros(self.params.n_particles, dtype=np.float64))
         self.d_space_size = cuda.to_device(self.params.space_size)
         self.d_result_force = cuda.to_device(self.result_force)
+        self.d_pipe = cuda.to_device(self.params.pipe.to_numpy())
 
     def __finalize_computation(self):
         self.new_state = SimulationState(
@@ -79,10 +81,17 @@ class AbstractSPHStrategy(ABC):
         cuda.synchronize()
 
     def __collide(self):
-        collision_kernel_box[self.grid_size, self.block_size](
+        collision_kernel[self.grid_size, self.block_size](
             self.d_position,
             self.d_velocity,
-            self.d_space_size
+            self.d_pipe,
+            self.rng_states
         )
+        # collision_kernel_box[self.grid_size, self.block_size](
+        #     self.d_position,
+        #     self.d_velocity,
+        #     self.d_space_size
+        # )
+
         cuda.synchronize()
 
