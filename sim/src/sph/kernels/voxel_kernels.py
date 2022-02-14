@@ -52,7 +52,8 @@ def get_neighbours(
         voxel_size,
         space_dim,
         voxel_begin,
-        voxel_particle_map
+        voxel_particle_map,
+        rng_states
 ):
     # find out in which voxel we are
     voxel = cuda.local.array(3, np.int32)
@@ -104,7 +105,7 @@ def get_neighbours(
 
     # get MAX_NEIGHBOURS random neighbours
     samples = cuda.local.array(min(total_neigh_count, MAX_NEIGHBOURS), np.int32)
-    random_samples(samples, 0, total_neigh_count)
+    random_samples(samples, 0, total_neigh_count, rng_states, p_idx)
     i = 0
     for nei_idx in samples:
         nei_voxel_idx = get_voxel_id_from_acc(accum_particle_count, nei_idx)
@@ -112,6 +113,7 @@ def get_neighbours(
         in_voxel_offset = nei_idx if nei_voxel_idx == 0 else nei_idx - particle_count_per_neigh_voxel[nei_voxel_idx - 1]
         neighbours[i] = voxel_particle_map[voxel_begin[neigh_voxels[nei_voxel_idx]] + in_voxel_offset][1]
         i += 1
+    return i
 
     #     # ... and add up to MAX_NEIGHBOURS particles from these voxels
     #     for map_entry in range(start, end):
@@ -152,6 +154,8 @@ def density_kernel(
         voxel_particle_map,
         voxel_size,
         space_dim,
+        rng_states
+
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -160,7 +164,7 @@ def density_kernel(
     neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
     neigh_count = get_neighbours(
         neighbours, i, position, voxel_size,
-        space_dim, voxel_begin, voxel_particle_map
+        space_dim, voxel_begin, voxel_particle_map, rng_states
     )
 
     new_density = 0.0
@@ -180,6 +184,7 @@ def pressure_kernel(
         voxel_particle_map,
         voxel_size,
         space_dim,
+        rng_states
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -188,7 +193,7 @@ def pressure_kernel(
     neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
     neigh_count = get_neighbours(
         neighbours, i, position, voxel_size,
-        space_dim, voxel_begin, voxel_particle_map
+        space_dim, voxel_begin, voxel_particle_map, rng_states
     )
 
     new_pressure_term = cuda.local.array(3, np.float64)
@@ -220,6 +225,7 @@ def viscosity_kernel(
         voxel_particle_map,
         voxel_size,
         space_dim,
+        rng_states
 ):
     i = get_index()
     if i >= position.shape[0]:
@@ -228,7 +234,7 @@ def viscosity_kernel(
     neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
     neigh_count = get_neighbours(
         neighbours, i, position, voxel_size,
-        space_dim, voxel_begin, voxel_particle_map
+        space_dim, voxel_begin, voxel_particle_map, rng_states
     )
 
     new_viscosity_term = cuda.local.array(3, np.double)

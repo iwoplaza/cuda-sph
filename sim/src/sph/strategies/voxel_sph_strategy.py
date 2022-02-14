@@ -27,6 +27,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
+            self.rng_states
         )
         cuda.synchronize()
 
@@ -39,6 +40,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
+            self.rng_states
         )
         cuda.synchronize()
 
@@ -52,6 +54,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
+            self.rng_states
         )
         cuda.synchronize()
 
