@@ -25,6 +25,24 @@ def are_neighbours(p1, p2, positions):
         (positions[p1][2] - positions[p2][2]) ** 2
     ) <= INF_R
 
+@cuda.jit(device=True)
+def random_samples(samples, min, max, rng_states, idx):
+    """fill samples array with random intagers from [min, max) range"""
+    if len(samples) > max - min:
+        return -1
+    for i in range(len(samples)):
+        rand = cuda.random.xoroshiro128p_normal_float32(rng_states, idx)
+        samples[i] = np.int32(rand * (max - min) + min)
+
+
+@cuda.jit(device=True)
+def get_voxel_id_from_acc(accum_particle_count, particle_idx) -> int:
+    nei_voxel_idx = 0 
+    # [10, 12, 15], 9 -> 0, 12 -> 2, 11 -> 1
+    while accum_particle_count[nei_voxel_idx] <= particle_idx:
+        nei_voxel_idx += 1 
+    return nei_voxel_idx
+
 
 @cuda.jit(device=True)
 def get_neighbours(
@@ -65,6 +83,7 @@ def get_neighbours(
     particle_count_per_neigh_voxel = cuda.local.array(NEIGHBOURING_VOXELS_COUNT, np.int32)
     accum_particle_count = cuda.local.array(NEIGHBOURING_VOXELS_COUNT, np.int32)
     total_neigh_count = 0
+    nei_idx = 0
     for i in neigh_voxels:
         if i == -1 or voxel_begin[i] == -1:
             continue
@@ -79,12 +98,20 @@ def get_neighbours(
         )
         particle_count_in_this_voxel = end - start
         total_neigh_count += particle_count_in_this_voxel
-        accum_particle_count[i] = total_neigh_count
-        particle_count_per_neigh_voxel[i] = particle_count_in_this_voxel
+        accum_particle_count[nei_idx] = total_neigh_count
+        particle_count_per_neigh_voxel[nei_idx] = particle_count_in_this_voxel
+        nei_idx += 1
 
     # get MAX_NEIGHBOURS random neighbours
-    for _ in range(MAX_NEIGHBOURS):
-
+    samples = cuda.local.array(min(total_neigh_count, MAX_NEIGHBOURS), np.int32)
+    random_samples(samples, 0, total_neigh_count)
+    i = 0
+    for nei_idx in samples:
+        nei_voxel_idx = get_voxel_id_from_acc(accum_particle_count, nei_idx)
+        # voxel_particles_num  = particle_count_per_neigh_voxel[nei_voxel_idx]
+        in_voxel_offset = nei_idx if nei_voxel_idx == 0 else nei_idx - particle_count_per_neigh_voxel[nei_voxel_idx - 1]
+        neighbours[i] = voxel_particle_map[voxel_begin[neigh_voxels[nei_voxel_idx]] + in_voxel_offset][1]
+        i += 1
 
     #     # ... and add up to MAX_NEIGHBOURS particles from these voxels
     #     for map_entry in range(start, end):
