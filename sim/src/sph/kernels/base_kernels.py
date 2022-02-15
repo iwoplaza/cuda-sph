@@ -248,8 +248,7 @@ def collision_kernel(
 
     pipe_index = find_segment(position[i], pipe)
     if pipe_index == -1:  # element is outside
-        pass
-        #put_particle_at_pipe_begin(position[i], velocity[i], pipe, rng_states, i)
+        put_particle_at_pipe_begin(position[i], velocity[i], pipe, rng_states, i)
     else:
         if is_out_of_pipe(position[i], pipe, pipe_index):
             solve_collision(position[i], velocity[i], pipe, pipe_index)
@@ -312,7 +311,6 @@ def put_particle_at_pipe_begin(position, velocity, pipe, rng_states, i):
 @cuda.jit()
 def spawn_particles_inside_pipe_kernel(
         position: np.ndarray,
-        velocity: np.ndarray,
         pipe: np.ndarray,
         rng_states: np.ndarray
 ):
@@ -323,4 +321,4 @@ def spawn_particles_inside_pipe_kernel(
     if i >= position.shape[0]:
         return
 
-    put_particle_at_pipe_begin(position[i], velocity[i], pipe, rng_states, i)
+    rand_position_inside_pipe(position[i], pipe, rng_states, i)

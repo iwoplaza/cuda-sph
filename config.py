@@ -3,7 +3,7 @@ import numpy as np
 
 
 # physics constants
-MASS:  np.float64 = 0.001
+MASS:  np.float64 = 1
 RHO_0: np.float64 = 1.0
 INF_R: np.float64 = 2.0
 VISC:  np.float64 = 0.5
