@@ -58,26 +58,26 @@ class GLWindow(Window):
         self.__setup_projection()
 
     def __on_mouse_move(self, x: int, y: int):
-        for layer in reversed(self.layers):
+        for layer in self._layers:
             layer.on_mouse_move(x, y)
 
     def __on_mouse_action(self, button: int, state: int,
                           x: int, y: int):
         if state == GLUT_DOWN:
-            for layer in reversed(self.layers):
+            for layer in reversed(self._layers):
                 if layer.on_mouse_btn_pressed(x, y, button):
                     break
         else:
-            for layer in self.layers:
+            for layer in self._layers:
                 layer.on_mouse_btn_released(x, y, button)
 
     def __on_key_press(self, key, x, y):
-        for layer in reversed(self.layers):
+        for layer in reversed(self._layers):
             if layer.on_key_pressed(key):
                 break
 
     def __on_key_release(self, key, x, y):
-        for layer in self.layers:
+        for layer in self._layers:
             layer.on_key_released(key)
 
     def __update_ui_shader_uniforms(self, shader):
@@ -102,7 +102,7 @@ class GLWindow(Window):
                 shader.use()
                 shader.set_view_matrix(self.current_camera.view_mat)
 
-        for layer in self.layers:
+        for layer in self._layers:
             layer.draw(delta)
 
         glutSwapBuffers()

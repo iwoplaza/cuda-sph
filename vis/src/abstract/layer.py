@@ -9,11 +9,11 @@ class Layer:
     def add(self, component: Component):
         self.components.append(component)
 
-    def update(self, delta_time: float):
+    def _update(self, delta_time: float):
         pass
 
     def draw(self, delta_time: float):
-        self.update(delta_time)
+        self._update(delta_time)
 
         for c in self.components:
             c.draw(delta_time)
