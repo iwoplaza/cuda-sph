@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from numba import cuda
+import numba.cuda.random as cuda_rand
 from common.data_classes import SimulationParameters, SimulationState, Pipe
 from sim.src.sph import thread_layout
 from sim.src.sph.kernels.base_kernels import spawn_particles_inside_pipe_kernel
@@ -51,7 +52,7 @@ def inside_pipe(params: SimulationParameters, pipe: Pipe) -> SimulationState:
     d_position = cuda.to_device(position)
     d_velocity = cuda.to_device(velocity)
     d_pipe = cuda.to_device(pipe.to_numpy())
-    rng_states = random.create_xoroshiro128p_states(grid_size * block_size, seed=17349)
+    rng_states = cuda_rand.create_xoroshiro128p_states(grid_size * block_size, seed=17349)
     spawn_particles_inside_pipe_kernel[grid_size, block_size]\
         (d_position, d_velocity, d_pipe, rng_states)
     cuda.synchronize()

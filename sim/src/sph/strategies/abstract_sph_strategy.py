@@ -11,7 +11,7 @@ import sim.src.sph.thread_layout as thread_layout
 class AbstractSPHStrategy(ABC):
     def __init__(self, params: SimulationParameters):
         self.params = params
-        self.dt = 1 / self.params.fps
+        self.dt = 1.0 / self.params.fps
         self.old_state: SimulationState = None
         self.new_state: SimulationState = None
         thread_setup = thread_layout.organize(params.n_particles)
@@ -27,7 +27,10 @@ class AbstractSPHStrategy(ABC):
         self._compute_density()
         self._compute_pressure()
         self._compute_viscosity()
-
+        print("Values:")
+        print(np.max(self.d_new_pressure_term.copy_to_host()))
+        print(np.max(self.d_new_viscosity_term.copy_to_host()))
+        print(np.max(self.d_new_density.copy_to_host()))
         self.__integrate()
         self.__collide()
         self.__finalize_computation()
@@ -82,17 +85,17 @@ class AbstractSPHStrategy(ABC):
         cuda.synchronize()
 
     def __collide(self):
-        # collision_kernel[self.grid_size, self.block_size](
-        #     self.d_position,
-        #     self.d_velocity,
-        #     self.d_pipe,
-        #     self.rng_states
-        # )
-        collision_kernel_box[self.grid_size, self.block_size](
+        collision_kernel[self.grid_size, self.block_size](
             self.d_position,
             self.d_velocity,
-            self.d_space_size
+            self.d_pipe,
+            self.rng_states
         )
+        #collision_kernel_box[self.grid_size, self.block_size](
+        #    self.d_position,
+        #    self.d_velocity,
+        #    self.d_space_size
+        #)
 
         cuda.synchronize()
 
