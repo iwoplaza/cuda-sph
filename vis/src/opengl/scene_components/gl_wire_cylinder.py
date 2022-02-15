@@ -10,9 +10,8 @@ from vis.src.opengl.common_shaders import CommonShaders
 
 class GLWireCylinder(WireCylinder):
     def __init__(self, start: Vec3f, end: Vec3f, start_radius: float, end_radius: float):
-        circular_segments = 10
         super().__init__()
-
+        circular_segments = 10
         self.shader = CommonShaders.SOLID
 
         direction = glm.vec3(*end) - glm.vec3(*start)
