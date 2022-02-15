@@ -133,9 +133,9 @@ def find_segment(position, pipe):
 @cuda.jit(device=True)
 def calc_collision_move_vector_length(l_point, l_vector, p_point, p_vector) -> np.double:
     for dim1 in range(0, 3):
-        for dim2 in range(dim1, 3):
+        for dim2 in range(dim1+1, 3):
             denominator = p_vector[dim1] * l_vector[dim2] - p_vector[dim2] * l_vector[dim1]
-            if denominator != 0:
+            if abs(denominator) > 0.001:
                 nominator = l_vector[dim1] * p_point[dim2] - l_vector[dim1] * l_point[dim2] - \
                             l_vector[dim2] * p_point[dim1] + l_vector[dim2] * l_point[dim1]
                 return nominator / denominator
@@ -143,7 +143,7 @@ def calc_collision_move_vector_length(l_point, l_vector, p_point, p_vector) -> n
     for dim in range(0, 3):
         if l_vector[dim] == 0 and p_vector[dim] != 0:
             return (l_point[dim] - p_point[dim]) / p_vector[dim]
-    return 0.0
+    return calc_vector_length(p_vector)/30
 
 
 @cuda.jit(device=True)
@@ -185,8 +185,9 @@ def solve_collision(position, speed, pipe, pipe_segment):
 
     edge_vector = cuda.local.array(3, np.double)
 
+    t = -0.01
     if start_radius == end_radius:
-        t = (position[1] / h * start_radius - position[1]) / speed[1]  # don't need for solving equation
+        #t = -0.1  # don't need for solving equation
 
         collision_point = cuda.local.array(3, np.double)  # calculating collision point
         for dim in range(3):
@@ -214,7 +215,7 @@ def solve_collision(position, speed, pipe, pipe_segment):
         for dim in range(3):
             edge_vector[dim] = second_l_point[dim] - first_l_point[dim]
 
-        t = calc_collision_move_vector_length(first_l_point, edge_vector, position, speed)
+        #t = -0.1
 
         collision_point = cuda.local.array(3, np.double)
         for dim in range(3):
@@ -247,7 +248,8 @@ def collision_kernel(
 
     pipe_index = find_segment(position[i], pipe)
     if pipe_index == -1:  # element is outside
-        put_particle_at_pipe_begin(position[i], velocity[i], pipe, rng_states, i)
+        pass
+        #put_particle_at_pipe_begin(position[i], velocity[i], pipe, rng_states, i)
     else:
         if is_out_of_pipe(position[i], pipe, pipe_index):
             solve_collision(position[i], velocity[i], pipe, pipe_index)
