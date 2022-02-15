@@ -1,4 +1,4 @@
-import numba.cuda.random as random
+import random
 import numpy as np
 from numba import cuda
 from common.data_classes import SimulationParameters, SimulationState, Pipe
@@ -13,16 +13,20 @@ def pouring(params: SimulationParameters) -> SimulationState:
         .reshape((params.n_particles, 3)) \
         .astype("float64")
     for i in range(params.n_particles):
-        position[i][1] *= params.space_size[1] * 0.1
+        # position[i][1] *= params.space_size[1] * 0.1
         # position[i][1] += params.space_size[1] * 0.6
+        position[i][1] *= params.space_size[1]
 
-        position[i][0] *= params.space_size[0] * 0.1
+        # position[i][0] *= params.space_size[0] * 0.1
         # position[i][0] += params.space_size[0] * 0.9
+        position[i][0] *= params.space_size[0]
 
-        position[i][2] *= params.space_size[2] * 0.1
+        # position[i][2] *= params.space_size[2] * 0.1
+        position[i][2] *= params.space_size[2]
 
-    # set their moving direction ate the space's diagonal (and randomize it a bit)
-    base_velocity = [-29.0, 0.0, 29.0]
+
+    # set their moving direction at the space's diagonal (and randomize it a bit)
+    base_velocity = [-16.0, 0.0, 16.0]
     offset_range = 13.0
     velocity = np.zeros(params.n_particles * 3) \
         .reshape((params.n_particles, 3)) \

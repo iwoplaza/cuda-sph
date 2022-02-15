@@ -47,17 +47,19 @@ def compute_w(pos_i, pos_j):
 @cuda.jit(device=True)
 def compute_grad_w(pos_i, pos_j, result_vec):
     """Computes a gradient of W kernel (SPH weight) for two positions"""
-    factor = GRAD_W_CONST * \
-             (INF_R - norm_squared(pos_i, pos_j)) / \
-             norm(pos_i, pos_j)
+
+    dist = norm(pos_i, pos_j)
+
+    factor = GRAD_W_CONST * (INF_R - dist)**2
+
     for dim in range(3):
-        result_vec[dim] = factor * (pos_i[dim] - pos_j[dim])
+        result_vec[dim] = factor * (pos_i[dim] - pos_j[dim]) / dist
 
 
 @cuda.jit(device=True)
 def compute_lap_w(pos_i, pos_j):
     """Computes a laplacian of W kernel (SPH weight) for two positions"""
-    return LAP_W_CONST * (INF_R - norm_squared(pos_i, pos_j))
+    return LAP_W_CONST * (INF_R - norm(pos_i, pos_j))
 
 
 @cuda.jit
@@ -66,6 +68,7 @@ def integrating_kernel(
         updated_position: np.ndarray,
         updated_velocity: np.ndarray,
         external_force: np.ndarray,
+        density: np.ndarray,
         pressure_term: np.ndarray,
         viscosity_term: np.ndarray,
         DT: np.float64,
@@ -81,7 +84,7 @@ def integrating_kernel(
                 -pressure_term[i][dim] +
                 viscosity_term[i][dim]
         )
-        updated_velocity[i][dim] += result_force[i][dim] / MASS * DT
+        updated_velocity[i][dim] += result_force[i][dim] / density[i] * DT
         updated_position[i][dim] += updated_velocity[i][dim] * DT
 
 

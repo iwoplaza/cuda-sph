@@ -74,6 +74,7 @@ class AbstractSPHStrategy(ABC):
             self.d_position,
             self.d_velocity,
             self.d_external_force,
+            self.d_new_density,
             self.d_new_pressure_term,
             self.d_new_viscosity_term,
             self.dt,
@@ -81,17 +82,17 @@ class AbstractSPHStrategy(ABC):
         cuda.synchronize()
 
     def __collide(self):
-        collision_kernel[self.grid_size, self.block_size](
-            self.d_position,
-            self.d_velocity,
-            self.d_pipe,
-            self.rng_states
-        )
-        # collision_kernel_box[self.grid_size, self.block_size](
+        # collision_kernel[self.grid_size, self.block_size](
         #     self.d_position,
         #     self.d_velocity,
-        #     self.d_space_size
+        #     self.d_pipe,
+        #     self.rng_states
         # )
+        collision_kernel_box[self.grid_size, self.block_size](
+            self.d_position,
+            self.d_velocity,
+            self.d_space_size
+        )
 
         cuda.synchronize()
 
