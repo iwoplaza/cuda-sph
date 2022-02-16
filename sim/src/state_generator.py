@@ -1,5 +1,6 @@
 from __future__ import annotations
-
+import config
+from sim.src.sph import NaiveSPHStrategy, VoxelSPHStrategy
 from common.data_classes import SimulationState, SimulationParameters
 import sim.src.sph as sph
 
@@ -8,8 +9,10 @@ class StateGenerator:
     def __init__(self, start_state: SimulationState, params: SimulationParameters) -> None:
         self.current_state = start_state
         self.current_frame_idx = 0
-        self.n_frames = params.simulation_duration * params.fps
-        self.sph_strategy: sph.AbstractSPHStrategy = sph.NaiveSPHStrategy(params)
+        self.n_frames = params.duration * params.fps
+        self.sph_strategy: sph.AbstractSPHStrategy = NaiveSPHStrategy() \
+            if config.SIM_STRATEGY == config.SimStrategy.NAIVE \
+            else VoxelSPHStrategy()
 
     def __next__(self) -> SimulationState:
         if self.current_frame_idx >= self.n_frames:

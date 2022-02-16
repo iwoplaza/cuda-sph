@@ -15,7 +15,7 @@ class MainUILayer(Layer):
         self.__showing_stats = False
         self.__fps_counter = FPSCounter()
 
-        self.font = ctx.create_font("assets/Roboto-Regular.ttf")
+        self.font = ctx.create_font("vis/assets/Roboto-Regular.ttf")
 
         self.test_button = ctx.create_button(self.font, (10, 10), 'Toggle stats', self.__toggle_show_stats)
         self.test_button_2 = ctx.create_button(self.font, (145, 10), 'Reset camera',

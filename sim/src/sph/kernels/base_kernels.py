@@ -3,7 +3,7 @@ import numpy as np
 import math
 import numba.cuda.random as random
 
-from config import W_CONST, INF_R_2, GRAD_W_CONST, INF_R, LAP_W_CONST, DAMP, MASS, DEFAULT_SPEED
+from config import W_CONST, INF_R_2, GRAD_W_CONST, INF_R, LAP_W_CONST, DAMP, MASS
 
 
 @cuda.jit(device=True)
@@ -302,7 +302,8 @@ def put_particle_at_pipe_begin(position, velocity, pipe, rng_states, i):
     position[0] = 0.0
     rand_position_inside_pipe(position, pipe, rng_states, i)
 
-    velocity[0] = DEFAULT_SPEED
+    # velocity[0] = DEFAULT_SPEED
+    # put particle with the same x speed as it was
     for dim in range(1, 3):
         velocity[dim] = 0
 

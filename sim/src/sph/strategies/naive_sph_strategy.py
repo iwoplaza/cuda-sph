@@ -1,4 +1,4 @@
-from common.data_classes import SimulationParameters
+import config
 from sim.src.sph.strategies.abstract_sph_strategy import AbstractSPHStrategy
 from numba import cuda
 from sim.src.sph.kernels import naive_kernels
@@ -6,8 +6,8 @@ from sim.src.sph.kernels import naive_kernels
 
 class NaiveSPHStrategy(AbstractSPHStrategy):
 
-    def __init__(self, params: SimulationParameters):
-        super().__init__(params)
+    def __init__(self):
+        super().__init__(config.inject_params())
 
     def _initialize_computation(self):
         super()._send_arrays_to_gpu()

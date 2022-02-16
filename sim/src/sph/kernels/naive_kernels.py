@@ -1,5 +1,5 @@
 from config import INF_R_2, K, RHO_0, MASS, VISC
-from sim.src.sph.kernels.base_kernels import get_index, compute_w, norm, norm_squared, compute_grad_w, compute_lap_w
+from sim.src.sph.kernels.base_kernels import get_index, compute_w, norm_squared, compute_grad_w, compute_lap_w
 from numba import cuda
 import numpy as np
 
@@ -41,7 +41,6 @@ def pressure_kernel(
 
         p_i = K * (density[i] - RHO_0)
         p_j = K * (density[j] - RHO_0)
-        # factor = p_i / density[i] ** 2 + p_j / density[j] ** 2
         factor = (p_i + p_j) / (2 * density[j])
         grad_w = cuda.local.array(3, np.float64)
         compute_grad_w(position[i], position[j], grad_w)

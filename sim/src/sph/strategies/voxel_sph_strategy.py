@@ -1,3 +1,4 @@
+import config
 from common.data_classes import SimulationParameters
 from config import MASS, INF_R, K, RHO_0, VISC
 from sim.src.sph.strategies.abstract_sph_strategy import AbstractSPHStrategy
@@ -10,8 +11,8 @@ from sim.src.sph.kernels import voxel_kernels
 
 class VoxelSPHStrategy(AbstractSPHStrategy):
 
-    def __init__(self, params: SimulationParameters):
-        super().__init__(params)
+    def __init__(self):
+        super().__init__(config.inject_params())
 
     def _initialize_computation(self):
         super()._send_arrays_to_gpu()
@@ -63,7 +64,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             [math.ceil(space_size[dim] / voxel_size[dim]) for dim in range(3)],
             dtype=np.int32
         )
-        d_voxels = cuda.to_device(np.zeros(self.params.n_particles, dtype=np.int32))  # new buffer for voxel indices
+        d_voxels = cuda.to_device(np.zeros(self.params.particle_count, dtype=np.int32))  # new buffer for voxel indices
         kernels.assign_voxels_to_particles_kernel[self.grid_size, self.block_size](
             d_voxels,
             self.d_position,
@@ -74,7 +75,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
 
         # create and sort (voxel_idx, particles_id) map
         self.voxel_particle_map = np.asarray(
-            [(self.voxels[i], i) for i in range(self.params.n_particles)],
+            [(self.voxels[i], i) for i in range(self.params.particle_count)],
             dtype=[("voxel_id", np.int32), ("particle_id", np.int32)],
         )
         self.voxel_particle_map.sort(order="voxel_id")

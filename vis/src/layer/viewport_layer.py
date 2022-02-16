@@ -1,5 +1,6 @@
 import numpy as np
 
+import config
 from common.data_classes import SimulationParameters
 from vis.src.abstract import Layer, SceneLayerContext
 from vis.src.playback_management import PlaybackManager
@@ -18,13 +19,12 @@ class ViewportLayer(Layer):
         self.particles = fct.create_point_field((0, 0, 0), (1, 1, 1))
         self.add(self.particles)
 
-        # in case of simulation in cube
-        self.cube = fct.create_wire_cube((0, 0, 0), params.space_size)
-        self.add(self.cube)
-
-        # in case of simulation in pipe
-        # self.pipe = fct.create_wire_pipe(params.pipe)
-        # self.add(self.pipe)
+        if config.SIM_MODE == config.SimMode.PIPE:
+            self.pipe = fct.create_wire_pipe(params.pipe)
+            self.add(self.pipe)
+        else:
+            self.cube = fct.create_wire_cube((0, 0, 0), params.space_size)
+            self.add(self.cube)
 
     def _update(self, delta_time: float):
         self.playback_manager.update(delta_time)

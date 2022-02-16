@@ -68,10 +68,10 @@ def load_shader_src_from_asset(vert_shader_name, frag_shader_name=None):
     if frag_shader_name is None:
         frag_shader_name = vert_shader_name
 
-    with open(f'assets/{vert_shader_name}.vert') as f:
+    with open(f'vis/assets/{vert_shader_name}.vert') as f:
         vert_shader_src = f.read()
 
-    with open(f'assets/{frag_shader_name}.frag') as f:
+    with open(f'vis/assets/{frag_shader_name}.frag') as f:
         frag_shader_src = f.read()
 
     return {'vert_shader_src': vert_shader_src, 'frag_shader_src': frag_shader_src}
