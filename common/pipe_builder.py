@@ -134,7 +134,7 @@ class PipeBuilder:
         length_scale = space_size_x/total_length
         current_x = 0.
         for segment in self.__pipe.segments:
-            segment.start_point = (current_x, space_size_yz/2, space_size_yz/2)
+            segment.start_point = (current_x, space_size_yz/2.0, space_size_yz/2.0)
             segment.length = segment.length*length_scale
             current_x += segment.length
 
