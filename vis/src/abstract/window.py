@@ -6,10 +6,10 @@ class Window:
         self.title = title
         self.width = width
         self.height = height
-        self.layers = []
+        self._layers = []
 
     def add_layer(self, layer: Layer):
-        self.layers.append(layer)
+        self._layers.append(layer)
 
     def run(self):
         raise NotImplementedError()

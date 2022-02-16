@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numba import cuda
 from common.data_classes import SimulationState, SimulationParameters
-from config import MASS
+import numba.cuda.random as random
 from sim.src.sph.kernels import base_kernels
-from sim.src.sph.kernels.base_kernels import collision_kernel_box
+from sim.src.sph.kernels.base_kernels import collision_kernel, collision_kernel_box
 import sim.src.sph.thread_layout as thread_layout
 from sim.src.sph.logging_utils import sph_stage_logger
 import logging
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class AbstractSPHStrategy(ABC):
     def __init__(self, params: SimulationParameters):
         self.params = params
-        self.dt = 1 / self.params.n_particles
+        self.dt = 1.0 / self.params.fps
         self.old_state: SimulationState = None
         self.new_state: SimulationState = None
         thread_setup = thread_layout.organize(params.n_particles)
@@ -23,6 +23,7 @@ class AbstractSPHStrategy(ABC):
         self.block_size = thread_setup[1]
         self.result_force = np.zeros((self.params.n_particles, 3)).astype(np.float64)
         self.__init_log()
+        self.rng_states = random.create_xoroshiro128p_states(self.grid_size * self.block_size, seed=16435234)
 
     @sph_stage_logger(logger=logger)
     def compute_next_state(self, old_state: SimulationState) -> SimulationState:
@@ -32,7 +33,6 @@ class AbstractSPHStrategy(ABC):
         self._compute_density()
         self._compute_pressure()
         self._compute_viscosity()
-
         self.__integrate()
         self.__collide()
         self.__finalize_computation()
@@ -70,6 +70,7 @@ class AbstractSPHStrategy(ABC):
         self.d_new_density = cuda.to_device(np.zeros(self.params.n_particles, dtype=np.float64))
         self.d_space_size = cuda.to_device(self.params.space_size)
         self.d_result_force = cuda.to_device(self.result_force)
+        self.d_pipe = cuda.to_device(self.params.pipe.to_numpy())
 
     @sph_stage_logger(logger)
     def __finalize_computation(self):
@@ -88,6 +89,7 @@ class AbstractSPHStrategy(ABC):
             self.d_position,
             self.d_velocity,
             self.d_external_force,
+            self.d_new_density,
             self.d_new_pressure_term,
             self.d_new_viscosity_term,
             self.dt,
@@ -96,9 +98,18 @@ class AbstractSPHStrategy(ABC):
 
     @sph_stage_logger(logger)
     def __collide(self):
-        collision_kernel_box[self.grid_size, self.block_size](
-            self.d_position, self.d_velocity, self.d_space_size
+        collision_kernel[self.grid_size, self.block_size](
+            self.d_position,
+            self.d_velocity,
+            self.d_pipe,
+            self.rng_states
         )
+        #collision_kernel_box[self.grid_size, self.block_size](
+        #    self.d_position,
+        #    self.d_velocity,
+        #    self.d_space_size
+        #)
+
         cuda.synchronize()
 
     def __init_log(self):
