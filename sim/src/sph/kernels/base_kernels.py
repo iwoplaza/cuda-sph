@@ -178,14 +178,12 @@ def calc_dt(position, speed, edge_vector, l_point):
 def calc_distance_to_pipe(point, edge_vector, l_point):
     points_vector = cuda.local.array(3, np.double)
     for dim in range(3):
-        points_vector[dim] = point[dim] - l_point[dim]
-    points_vector_length = calc_vector_length(points_vector)
-    for dim in range(3):
-        points_vector_length
-    vector_scalar_length = 0.0
-    for dim in range(3):
-        vector_scalar_length += points_vector[dim] * edge_vector[dim]
-    vector_scalar_length = abs(vector_scalar_length)
+        points_vector[dim] = l_point[dim] - point[dim]
+
+    vector_scalar = cuda.local.array(3, np.double)
+    calc_vector_scalar(vector_scalar, edge_vector, points_vector)
+
+    vector_scalar_length = calc_vector_length(vector_scalar)
     edge_vector_length = calc_vector_length(edge_vector)
     return vector_scalar_length / edge_vector_length
 
@@ -221,6 +219,9 @@ def calc_edge_vector(edge_vector, first_l_point, position, pipe, pipe_segment):
 
     for dim in range(3):
         edge_vector[dim] = second_l_point[dim] - first_l_point[dim]
+
+    for dim in range(1, 3):
+        first_l_point[dim] = first_l_point[dim] + pipe[pipe_segment][dim]
 
 
 @cuda.jit(device=True)
@@ -323,10 +324,6 @@ def put_particle_at_pipe_begin(position, velocity, pipe, rng_states, i):
     """
     position[0] = 0.0
     rand_position_inside_pipe(position, pipe, rng_states, i)
-
-    velocity[0] = DEFAULT_SPEED
-    for dim in range(1, 3):
-        velocity[dim] = 0
 
 
 @cuda.jit()
