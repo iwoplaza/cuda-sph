@@ -1,7 +1,7 @@
 import numpy as np
 import json
 from common.data_classes import SimulationState, SimulationParameters, Pipe, Segment
-
+from dataclasses import fields
 
 SETTINGS_FILE = "/settings.json"
 
@@ -25,8 +25,9 @@ class Loader:
         """
         # print("Loading")
         simulation_parameters = SimulationParameters()
-        for name, value in vars(SimulationParameters()).items():
-            self.__manage_element(simulation_parameters, name, value)
+        print(fields(simulation_parameters))
+        for field in fields(SimulationParameters):
+            self.__manage_element(simulation_parameters, field.name, field.value)
         # print(simulation_parameters)
         return simulation_parameters
 

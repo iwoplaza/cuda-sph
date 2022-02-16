@@ -1,7 +1,8 @@
 import math
 from numba import cuda
+import numba.cuda.random as random
 import numpy as np
-from math import sqrt
+from math import sqrt, floor
 from config import INF_R, NEIGHBOURING_VOXELS_COUNT, MAX_NEIGHBOURS, MASS, K, RHO_0, VISC
 from sim.src.sph.kernels.base_kernels import get_index, compute_w, compute_grad_w, compute_lap_w
 
@@ -26,13 +27,15 @@ def are_neighbours(p1, p2, positions):
     ) <= INF_R
 
 @cuda.jit(device=True)
-def random_samples(samples, min, max, rng_states, idx):
+def random_samples(samples, n_samples, min, max, rng_states, idx):
     """fill samples array with random intagers from [min, max) range"""
     if len(samples) > max - min:
         return -1
-    for i in range(len(samples)):
+    n = n_samples if len(samples) > n_samples else len(samples)
+    for i in range(n):
         rand = cuda.random.xoroshiro128p_normal_float32(rng_states, idx)
-        samples[i] = np.int32(rand * (max - min) + min)
+        samples[i] = floor(rand * (max - min) ) + min
+    return n
 
 
 @cuda.jit(device=True)
@@ -104,16 +107,16 @@ def get_neighbours(
         nei_idx += 1
 
     # get MAX_NEIGHBOURS random neighbours
-    samples = cuda.local.array(min(total_neigh_count, MAX_NEIGHBOURS), np.int32)
-    random_samples(samples, 0, total_neigh_count, rng_states, p_idx)
-    i = 0
-    for nei_idx in samples:
+    samples_size = np.int32(min(total_neigh_count, MAX_NEIGHBOURS))
+    samples = cuda.local.array(MAX_NEIGHBOURS, np.int32)
+    actual_size = random_samples(samples, samples_size, 0, total_neigh_count, rng_states, p_idx) # actual_size should be the same as samples_size in this case
+    for i in range(actual_size):
+        nei_idx = samples[i]
         nei_voxel_idx = get_voxel_id_from_acc(accum_particle_count, nei_idx)
         # voxel_particles_num  = particle_count_per_neigh_voxel[nei_voxel_idx]
         in_voxel_offset = nei_idx if nei_voxel_idx == 0 else nei_idx - particle_count_per_neigh_voxel[nei_voxel_idx - 1]
         neighbours[i] = voxel_particle_map[voxel_begin[neigh_voxels[nei_voxel_idx]] + in_voxel_offset][1]
-        i += 1
-    return i
+    return actual_size
 
     #     # ... and add up to MAX_NEIGHBOURS particles from these voxels
     #     for map_entry in range(start, end):

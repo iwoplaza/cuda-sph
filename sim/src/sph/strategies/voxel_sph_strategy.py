@@ -3,6 +3,7 @@ from config import MASS, INF_R, K, RHO_0, VISC
 from sim.src.sph.strategies.abstract_sph_strategy import AbstractSPHStrategy
 import sim.src.sph.kernels.voxel_kernels as kernels
 from numba import cuda
+import numba.cuda.random as random
 import numpy as np
 import math
 from sim.src.sph.kernels import voxel_kernels
@@ -14,7 +15,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         super().__init__(params)
 
     def _initialize_computation(self):
-        self.rng_states = cuda.random.create_xoroshiro128p_states(1, seed=15190)
+        self.rng_states = random.create_xoroshiro128p_states(1, seed=15190)
         super()._send_arrays_to_gpu()
         self.__organize_voxels()
         self.__initialize_space_dim()
