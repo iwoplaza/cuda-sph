@@ -26,7 +26,6 @@ class StateGenerator:
             self.current_state = self.sph_strategy.compute_next_state(self.current_state)
 
         self.__computation_end_log()
-
         self.current_frame_idx += 1
         return self.current_state
 

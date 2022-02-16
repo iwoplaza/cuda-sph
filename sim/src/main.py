@@ -29,9 +29,9 @@ if __name__ == '__main__':
     generator = StateGenerator(start_state, params)
 
     for state in generator:
-        saver.save_next_state(state)
-        # print(f"pos: {np.round(state.position[0], 1).tolist()},"
-        #       f" vel: {np.round(state.velocity[0], 5).tolist()},"
-        #       f" force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")
+        # saver.save_next_state(state)
+        print(f"pos: {np.round(state.position[0], 1).tolist()},"
+              f" vel: {np.round(state.velocity[0], 5).tolist()},"
+              f" force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")
 
     print("Simulation finished.")

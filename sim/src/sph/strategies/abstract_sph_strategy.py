@@ -117,15 +117,14 @@ class AbstractSPHStrategy(ABC):
 
     def __next_state_log(self):
         logging.debug(
-            f"first particle stats: \
-                position {np.round(self.new_state.position[0], 1).tolist()},\
-                velocity: {np.round(self.new_state.velocity[0], 5).tolist()}"
+            f"first particle stats:"
+            + f"position {np.round(self.new_state.position[0], 1).tolist()}"
+            + f"velocity: {np.round(self.new_state.velocity[0], 5).tolist()}"
         )
 
     def __finalize_computation_log(self):
         logger.debug(
-            f"Created new simulation state with: \
-                position shape: {self.new_state.position.shape},\
-                velocity_shape: {self.new_state.velocity.shape},\
-                density shape: {self.new_state.density.shape}"
+            f"Created new simulation state with: position shape: {self.new_state.position.shape}"
+            + f"velocity_shape: {self.new_state.velocity.shape}"
+            + f"density shape: {self.new_state.density.shape}"
         )
