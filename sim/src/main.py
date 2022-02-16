@@ -9,12 +9,7 @@ from common.serializer.saver import Saver
 
 if __name__ == '__main__':
 
-    pipe = PipeBuilder().with_starting_radius(3) \
-        .add_roller_segment(1) \
-        .add_increasing_segment(1, 2) \
-        .add_roller_segment(1) \
-        .add_lessening_segment(1, 1) \
-        .add_roller_segment(1) \
+    pipe = PipeBuilder().with_ending_radius(3) \
         .transform(LONG_SPACE_SIZE[0], LONG_SPACE_SIZE[1]) \
         .get_result()
     params = SimulationParameters(
