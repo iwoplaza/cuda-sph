@@ -9,7 +9,7 @@ from common.serializer.saver import Saver
 
 
 def generate_simulation_state(params: SimulationParameters) -> SimulationState:
-    simulation_state = SimulationState(array(1), array(1), array(1), array(1))
+    simulation_state = SimulationState(array(1), array(1), array(1))
     simulation_state.set_random_from_params(params)
     for name in vars(simulation_state).keys():
         setattr(simulation_state, name, np.random.rand(params.n_particles, 3))

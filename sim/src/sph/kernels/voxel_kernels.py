@@ -208,4 +208,4 @@ def viscosity_kernel(
                                        MASS * VISC / density[i]
 
     for dim in range(3):
-        result_viscosity_term[i][dim] = new_viscosity_term[dim]
+        result_viscosity_term[i][dim] = min(1, new_viscosity_term[dim])
