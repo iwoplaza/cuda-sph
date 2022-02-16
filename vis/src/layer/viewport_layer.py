@@ -24,11 +24,11 @@ class ViewportLayer(Layer):
 
         # in case of simulation in pipe
         self.pipe = fct.create_wire_pipe(params.pipe)
+        print(params.pipe)
         self.add(self.pipe)
 
     def _update(self, delta_time: float):
         self.playback_manager.update(delta_time)
-        # print(self.camera.)
         self.particles.set_point_positions(self.playback_manager.get_current_state())
 
 

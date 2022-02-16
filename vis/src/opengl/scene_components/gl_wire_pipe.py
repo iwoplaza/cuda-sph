@@ -2,7 +2,6 @@ import math
 import glm
 import numpy as np
 from OpenGL.GL import *
-
 from common.data_classes import Pipe
 from vis.src.abstract.scene_components.wire_pipe import WirePipe
 from vis.src.vector import Vec3f
@@ -30,20 +29,22 @@ class GLWirePipe(WirePipe):
         for segment in self.__pipe.segments:
             xs = [segment.start_point[0], segment.start_point[0] + segment.length]
             rs = [segment.start_radius, segment.end_radius]
+            # make two circles, one at start, one at the end
             for i in range(2):
                 for j in range(circular_lines_count):
                     angle = angle_step * j
-                    next_angle = angle_step * (j + 1)
-                    y1, z1 = np.cos(angle), np.sin(angle)
-                    y2, z2 = np.cos(next_angle), np.sin(next_angle)
+                    next_angle = float(angle_step * (j + 1) % 360.0)
+                    y1, z1 = math.sin(angle), math.cos(angle)
+                    y2, z2 = math.sin(next_angle), math.cos(next_angle)
                     data.extend([
-                        xs[i], y1 * rs[i], z1,
-                        xs[i], y2 * rs[i], z2
+                        xs[i], y1 * rs[i], z1 * rs[i],
+                        xs[i], y2 * rs[i], z2 * rs[i]
                     ])
+                    # add connection between two circles
                     if i == 0:
                         data.extend([
-                            xs[i], y1 * rs[i], z1,
-                            xs[i+1], y1 * rs[i+1], z1
+                            xs[i], y1 * rs[i], z1 * rs[i],
+                            xs[i+1], y1 * rs[i+1], z1 * rs[i+1]
                         ])
 
         return np.array(data, np.float32)

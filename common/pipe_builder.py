@@ -139,7 +139,7 @@ class PipeBuilder:
             current_x += segment.length
 
         if not max_radius:
-            max_radius = space_size_yz/2
+            max_radius = space_size_yz / 2.0
 
         current_max_radius = 0.
         for segment in self.__pipe.segments:
@@ -148,7 +148,7 @@ class PipeBuilder:
             if segment.end_radius > current_max_radius:
                 current_max_radius = segment.end_radius
         scale = max_radius / current_max_radius
-        print(scale)
+        # print(scale)
         for segment in self.__pipe.segments:
             segment.start_radius = segment.start_radius * scale
             segment.end_radius = segment.end_radius * scale

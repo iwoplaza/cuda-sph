@@ -18,11 +18,12 @@ if __name__ == '__main__':
         .transform(LONG_SPACE_SIZE[0], LONG_SPACE_SIZE[1]) \
         .get_result()
     params = SimulationParameters(
-        # space_size=LONG_SPACE_SIZE,
-        # pipe=pipe
+        simulation_duration=1,
+        space_size=LONG_SPACE_SIZE,
+        pipe=pipe
     )
-    start_state = start_states.pouring(params)
-    # start_state = start_states.inside_pipe(params, pipe)
+    # start_state = start_states.pouring(params)
+    start_state = start_states.inside_pipe(params, pipe)
 
     saver = Saver("simulation_out", params)
     generator = StateGenerator(start_state, params)
