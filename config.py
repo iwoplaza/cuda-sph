@@ -21,7 +21,7 @@ LAP_W_CONST = 45.0 / (PI * INF_R_6)
 DEFAULT_DURATION = 20
 DEFAULT_FPS = 30
 DEFAULT_N_PARTICLES = 10000
-DEFAULT_EXT_FORCE = np.array([1.0, 0.0, 0.0], dtype=np.float64)  # (x,y,z)
+DEFAULT_EXT_FORCE = np.array([10.0, 0.0, 0.0], dtype=np.float64)  # (x,y,z)
 DEFAULT_SPEED = 5.0
 
 DEFAULT_SPACE_SIDE_LENGTH = 20 * INF_R
@@ -37,7 +37,3 @@ LONG_SPACE_SIZE = np.array(
 # neighbours settings (tbh it should never be changed XD)
 MAX_NEIGHBOURS = 32
 NEIGHBOURING_VOXELS_COUNT = 27
-
-
-
-

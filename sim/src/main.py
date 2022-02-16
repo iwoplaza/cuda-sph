@@ -18,7 +18,7 @@ if __name__ == '__main__':
         .transform(LONG_SPACE_SIZE[0], LONG_SPACE_SIZE[1]) \
         .get_result()
     params = SimulationParameters(
-        simulation_duration=3,
+        simulation_duration=20,
         space_size=LONG_SPACE_SIZE,
         pipe=pipe
     )

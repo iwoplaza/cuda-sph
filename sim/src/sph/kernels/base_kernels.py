@@ -319,11 +319,16 @@ def rand_position_inside_pipe(position, pipe, rng_states, i):
 @cuda.jit(device=True)
 def put_particle_at_pipe_begin(position, velocity, pipe, rng_states, i):
     """
-    Put particle at the beginning in the pipe, position y and z points are set randomly,
-    speed is set to [DEFAULT_SPEED, 0, 0]
+    Put particle at the beginning in the pipe, position y and z points are set randomly.
     """
-    position[0] = 0.0
-    rand_position_inside_pipe(position, pipe, rng_states, i)
+    if position[0] < 0:
+        position[0] = -position[0]
+        velocity[0] = -velocity[0]
+        if is_out_of_pipe(position, pipe, 0):
+            solve_collision(position, velocity, pipe, 0)
+    else:
+        position[0] = 0.0
+        rand_position_inside_pipe(position, pipe, rng_states, i)
 
 
 @cuda.jit()
