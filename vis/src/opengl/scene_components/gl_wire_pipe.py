@@ -2,7 +2,6 @@ import math
 import glm
 import numpy as np
 from OpenGL.GL import *
-
 from common.data_classes import Pipe
 from vis.src.abstract.scene_components.wire_pipe import WirePipe
 from vis.src.vector import Vec3f
@@ -27,24 +26,51 @@ class GLWirePipe(WirePipe):
         circular_lines_count = 10
         angle_step = np.pi * 2 / float(circular_lines_count)
 
+        # create start circles of each segment
         for segment in self.__pipe.segments:
-            xs = [segment.start_point[0], segment.start_point[0] + segment.length]
-            rs = [segment.start_radius, segment.end_radius]
-            for i in range(2):
-                for j in range(circular_lines_count):
-                    angle = angle_step * j
-                    next_angle = angle_step * (j + 1)
-                    y1, z1 = np.cos(angle), np.sin(angle)
-                    y2, z2 = np.cos(next_angle), np.sin(next_angle)
-                    data.extend([
-                        xs[i], y1 * rs[i], z1,
-                        xs[i], y2 * rs[i], z2
-                    ])
-                    if i == 0:
-                        data.extend([
-                            xs[i], y1 * rs[i], z1,
-                            xs[i+1], y1 * rs[i+1], z1
-                        ])
+            x_offset, y_offset, z_offset = segment.start_point
+            r = segment.start_radius
+            for j in range(circular_lines_count):
+                angle = angle_step * j
+                next_angle = angle_step * (j + 1)
+                y1, z1 = math.sin(angle), math.cos(angle)
+                y2, z2 = math.sin(next_angle), math.cos(next_angle)
+                data.extend([
+                    x_offset, y_offset + y1 * r, z_offset + z1 * r,
+                    x_offset, y_offset + y2 * r, z_offset + z2 * r
+                ])
+        # create last circle (end of the last segment)
+        segment = self.__pipe.segments[-1] # the last segment
+        x_offset = segment.start_point[0] + segment.length
+        y_offset, z_offset = segment.start_point[1:3]
+        r = segment.end_radius
+        for j in range(circular_lines_count):
+            angle = angle_step * j
+            next_angle = angle_step * (j + 1)
+            y1, z1 = math.sin(angle), math.cos(angle)
+            y2, z2 = math.sin(next_angle), math.cos(next_angle)
+            data.extend([
+                x_offset, y_offset + y1 * r, z_offset + z1 * r,
+                x_offset, y_offset + y2 * r, z_offset + z2 * r
+            ])
+
+        # add connections between two circles
+        for i in range(len(self.__pipe.segments)):
+            seg = self.__pipe.segments[i]
+            x1, x2 = seg.start_point[0], seg.start_point[0] + seg.length
+            r1, r2 = seg.start_radius, seg.end_radius
+            y_offset, z_offset = seg.start_point[1], seg.start_point[2]
+            for j in range(circular_lines_count):
+                angle = angle_step * j
+                y, z = math.sin(angle), math.cos(angle)
+                data.extend([
+                    x1, y_offset + y * r1, z_offset + z * r1,
+                    x2, y_offset + y * r2, z_offset + z * r2,
+                ])
+        # data.extend([
+        #     xs[i], y1 * rs[i], z1 * rs[i],
+        #     xs[i+1], y1 * rs[i+1], z1 * rs[i+1]
+        # ])
 
         return np.array(data, np.float32)
 
