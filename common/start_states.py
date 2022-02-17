@@ -50,7 +50,7 @@ def inside_pipe(params: SimulationParameters, pipe: Pipe) -> SimulationState:
     grid_size, block_size = thread_layout.organize(params.n_particles)
     d_position = cuda.to_device(position)
     d_pipe = cuda.to_device(pipe.to_numpy())
-    rng_states = cuda_rand.create_xoroshiro128p_states(grid_size * block_size, seed=17349)
+    rng_states = cuda_rand.create_xoroshiro128p_states(grid_size * block_size, seed=1)
     spawn_particles_inside_pipe_kernel[grid_size, block_size]\
         (d_position, d_pipe, rng_states)
     cuda.synchronize()

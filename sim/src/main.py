@@ -37,8 +37,9 @@ if __name__ == '__main__':
     print(f"Thread layout: grid size {generator.sph_strategy.grid_size}, "
           f"block size {generator.sph_strategy.block_size}")
 
-    for state in generator:
-        saver.save_next_state(state)
+    for i, state in enumerate(generator):
+        print(i)
+        # saver.save_next_state(state)
         # print(f"pos: {np.round(state.position[0], 1).tolist()},"
         #       f" vel: {np.round(state.velocity[0], 5).tolist()},"
         #       f" force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")

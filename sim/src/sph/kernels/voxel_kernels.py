@@ -45,18 +45,18 @@ def neigh_voxels_1d_indices(neighbours, voxel_coord, space_dim):
                 if is_in:
                     neighbours[valid_voxels_count] = compute_1d_idx(neigh_voxel, space_dim)
                     valid_voxels_count += 1
-    assert valid_voxels_count < NEIGHBOURING_VOXELS_COUNT
     return valid_voxels_count
 
-@cuda.jit(device=True)
-def random_samples(samples, n_samples, min, max, rng_states, idx):
-    """fill samples array with random intagers from [min, max) range"""
-    if len(samples) > max - min:
-        return -1
+@cuda.jit(device=True, debug=True)
+def random_samples(samples, n_samples, minn, maxx, rng_states, idx):
+    """fill samples array with random intagers from [minn, maxx) range"""
     n = n_samples if len(samples) > n_samples else len(samples)
     for i in range(n):
-        rand = cuda.random.xoroshiro128p_normal_float32(rng_states, idx)
-        samples[i] = floor(rand * (max - min) ) + min
+        rand = cuda.random.xoroshiro128p_uniform_float32(rng_states, idx)
+        scaled_rand = rand * np.float32(maxx - minn)
+        samples[i] = np.int32(scaled_rand + minn)
+        assert samples[i] >= minn 
+        assert samples[i] < maxx
     return n
 
 
@@ -69,7 +69,7 @@ def get_voxel_id_from_acc(accum_particle_count, particle_idx) -> int:
     return nei_voxel_idx
 
 
-@cuda.jit(device=True)
+@cuda.jit(device=True, debug=True)
 def get_neighbours(
         neighbours,
         p_idx,
@@ -80,6 +80,7 @@ def get_neighbours(
         voxel_particle_map,
         rng_states
 ):
+    max_voxel_id = space_dim[0] * space_dim[1] * space_dim[2]
     # find out in which voxel we are
     voxel = cuda.local.array(3, np.int32)
     compute_3d_voxel_idx(voxel, p_idx, position, voxel_size)
@@ -94,7 +95,9 @@ def get_neighbours(
     total_neigh_count = 0
     nei_idx = 0
     for voxel_id in nei_voxels_indices[:nei_voxels_count]:
-        if voxel_id == -1 or voxel_begin[voxel_id] == -1:
+        if not (0 < voxel_id < max_voxel_id):
+            return -1
+        if voxel_begin[voxel_id] == -1:
             continue
         # get indices range, in which the particles of that voxel are located
         start = voxel_begin[voxel_id]
@@ -116,27 +119,20 @@ def get_neighbours(
     samples_size = np.int32(min(total_neigh_count, MAX_NEIGHBOURS))
     samples = cuda.local.array(MAX_NEIGHBOURS, np.int32)
     actual_size = random_samples(samples, samples_size, 0, total_neigh_count, rng_states, p_idx) # actual_size should be the same as samples_size in this case
-    for i in range(actual_size):
-        nei_idx = samples[i]
+    i = 0
+    for nei_idx in samples[:actual_size]:
+        if nei_idx == p_idx:
+            continue
         nei_voxel_idx = get_voxel_id_from_acc(accum_particle_count, nei_idx)
         nei_voxel_start = voxel_begin[nei_voxels_indices[nei_voxel_idx]]
 
         # voxel_particles_num  = particle_count_per_nei_voxel[nei_voxel_idx]
         in_voxel_offset = nei_idx if nei_voxel_idx == 0 else (nei_idx - particle_count_per_nei_voxel[nei_voxel_idx - 1])
         neighbours[i] = voxel_particle_map[nei_voxel_start + in_voxel_offset - 1][1]
+        i += 1
         if i >= MAX_NEIGHBOURS:
             return i
     return actual_size
-
-    #     # ... and add up to MAX_NEIGHBOURS particles from these voxels
-    #     for map_entry in range(start, end):
-    #         potential_neigh = voxel_particle_map[map_entry][1]
-    #         if are_neighbours(p_idx, potential_neigh, position):
-    #             neighbours[neigh_idx] = potential_neigh
-    #             neigh_idx += 1
-    #             if neigh_idx >= MAX_NEIGHBOURS:
-    #                 return neigh_idx
-    # return neigh_idx
 
 
 @cuda.jit
@@ -158,6 +154,31 @@ def assign_voxels_to_particles_kernel(
     # idx = x + y*w + z*w*d
     voxels[i] = compute_1d_idx(voxel, space_dim)
 
+@cuda.jit(device=True)
+def fill_foo_array(foo, neighbours, neigh_count):
+    foo[0] = neigh_count
+    for i in range(MAX_NEIGHBOURS):
+        foo[i+1] = neighbours[i]
+
+@cuda.jit
+def neighbours_kernel(
+        neighbours_indices,
+        position,
+        voxel_size,
+        space_dim,
+        voxel_begin,
+        voxel_particle_map,
+        rng_states
+):
+    i = get_index()
+    if i >= position.shape[0]:
+        return
+    for j in range(MAX_NEIGHBOURS):
+        neighbours_indices[j] = -1
+    neigh_count = get_neighbours(
+        neighbours_indices[i], i, position, voxel_size,
+        space_dim, voxel_begin, voxel_particle_map, rng_states
+    )
 
 @cuda.jit
 def density_kernel(
@@ -167,23 +188,30 @@ def density_kernel(
         voxel_particle_map,
         voxel_size,
         space_dim,
-        rng_states
-
+        rng_states,
+        neighbours
+        # foo,
+        # nei_voxels_indices,
+        # particle_count_per_nei_voxel
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
 
-    neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
-    neigh_count = get_neighbours(
-        neighbours, i, position, voxel_size,
-        space_dim, voxel_begin, voxel_particle_map, rng_states
-    )
 
+    # neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
+    # neigh_count = get_neighbours(
+    #     neighbours, i, position, voxel_size,
+    #     space_dim, voxel_begin, voxel_particle_map, rng_states
+    # )
+    # if i == 0:
+    #     fill_foo_array(foo, neighbours, neigh_count)
     new_density = 0.0
-    for j in neighbours[:neigh_count]:
+    for j in neighbours[i]:
         if j == i:
             continue
+        if j == -1:
+            break
         new_density += compute_w(position[i], position[j])
     result_density[i] = new_density * MASS
 
@@ -197,25 +225,28 @@ def pressure_kernel(
         voxel_particle_map,
         voxel_size,
         space_dim,
-        rng_states
+        rng_states,
+        neighbours
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
 
-    neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
-    neigh_count = get_neighbours(
-        neighbours, i, position, voxel_size,
-        space_dim, voxel_begin, voxel_particle_map, rng_states
-    )
+    # neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
+    # neigh_count = get_neighbours(
+    #     neighbours, i, position, voxel_size,
+    #     space_dim, voxel_begin, voxel_particle_map, rng_states
+    # )
 
     new_pressure_term = cuda.local.array(3, np.float64)
     for dim in range(3):
         new_pressure_term[dim] = 0.0
 
-    for j in neighbours[:neigh_count]:
+    for j in neighbours[i]:
         if j == i:
             continue
+        if j == -1:
+            break
         p_i = K * (density[i] - RHO_0)
         p_j = K * (density[j] - RHO_0)
         factor = p_i / density[i] ** 2 + p_j / density[j] ** 2
@@ -238,25 +269,28 @@ def viscosity_kernel(
         voxel_particle_map,
         voxel_size,
         space_dim,
-        rng_states
+        rng_states,
+        neighbours
 ):
     i = get_index()
     if i >= position.shape[0]:
         return
 
-    neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
-    neigh_count = get_neighbours(
-        neighbours, i, position, voxel_size,
-        space_dim, voxel_begin, voxel_particle_map, rng_states
-    )
+    # neighbours = cuda.local.array(MAX_NEIGHBOURS, np.int32)
+    # neigh_count = get_neighbours(
+    #     neighbours, i, position, voxel_size,
+    #     space_dim, voxel_begin, voxel_particle_map, rng_states
+    # )
 
-    new_viscosity_term = cuda.local.array(3, np.double)
+    new_viscosity_term = cuda.local.array(3, np.float64)
     for dim in range(3):
         new_viscosity_term[dim] = 0.0
 
-    for j in neighbours[:neigh_count]:
+    for j in neighbours[i]:
         if j == i:
             continue
+        if j == -1:
+            break
         visc_term_j = cuda.local.array(3, np.float64)
         lap_w = compute_lap_w(position[i], position[j])
         for dim in range(3):

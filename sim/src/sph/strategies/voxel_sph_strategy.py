@@ -1,5 +1,5 @@
 from common.data_classes import SimulationParameters
-from config import MASS, INF_R, K, RHO_0, VISC
+from config import MASS, INF_R, K, RHO_0, VISC, MAX_NEIGHBOURS, NEIGHBOURING_VOXELS_COUNT
 from sim.src.sph.strategies.abstract_sph_strategy import AbstractSPHStrategy
 import sim.src.sph.kernels.voxel_kernels as kernels
 from numba import cuda
@@ -14,11 +14,37 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
     def __init__(self, params: SimulationParameters):
         super().__init__(params)
 
+        self.neighbours = np.zeros((self.params.n_particles, MAX_NEIGHBOURS+1), dtype=np.int32)
+
     def _initialize_computation(self):
-        self.rng_states = random.create_xoroshiro128p_states(1, seed=15190)
+        self.rng_states = random.create_xoroshiro128p_states(self.grid_size * self.block_size, seed=1)
         super()._send_arrays_to_gpu()
         self.__organize_voxels()
         self.__initialize_space_dim()
+        # print(self.neighbours)
+        self.d_neighbours = cuda.to_device(self.neighbours)
+        self.__compute_neighbours()
+        self.neighbors = self.d_neighbours.copy_to_host()
+        self.__inspect_neighbours()
+
+    def __inspect_neighbours(self):
+        _max = np.max(self.neighbors)
+        assert _max < self.params.n_particles, _max
+
+
+
+    def __compute_neighbours(self):
+        voxel_kernels.neighbours_kernel[self.grid_size, self.block_size](
+            self.neighbours,
+            self.d_position,
+            self.d_voxel_size,
+            self.space_dim,
+            self.voxel_begin,
+            self.voxel_particle_map,
+            self.rng_states
+        )
+        cuda.synchronize()
+
 
     def _compute_density(self):
         voxel_kernels.density_kernel[self.grid_size, self.block_size](
@@ -28,7 +54,8 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            self.rng_states
+            self.rng_states,
+            self.d_neighbours
         )
         cuda.synchronize()
 
@@ -41,7 +68,8 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            self.rng_states
+            self.rng_states,
+            self.d_neighbours
         )
         cuda.synchronize()
 
@@ -55,7 +83,9 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
             self.d_voxel_particle_map,
             self.d_voxel_size,
             self.d_space_dim,
-            self.rng_states
+            self.rng_states,
+            self.d_neighbours
+
         )
         cuda.synchronize()
 
@@ -90,6 +120,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         self.voxel_begin = np.array([-1 for _ in range(n_voxels)], dtype=np.int32)
         self.__populate_voxel_begins()
         self.d_voxel_begin = cuda.to_device(self.voxel_begin)
+        print(self.voxel_particle_map)
 
     def __populate_voxel_begins(self):
         map_idx = 0

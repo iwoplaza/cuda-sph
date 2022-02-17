@@ -9,7 +9,7 @@ class StateGenerator:
         self.current_state = start_state
         self.current_frame_idx = 0
         self.n_frames = params.simulation_duration * params.fps
-        self.sph_strategy: sph.AbstractSPHStrategy = sph.NaiveSPHStrategy(params)
+        self.sph_strategy: sph.AbstractSPHStrategy = sph.VoxelSPHStrategy(params)
 
     def __next__(self) -> SimulationState:
         if self.current_frame_idx >= self.n_frames:
