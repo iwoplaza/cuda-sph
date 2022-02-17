@@ -20,19 +20,31 @@ class MainUILayer(Layer):
 
         self.font = ctx.create_font(os.path.join(config.ROOT_PROJ_DIRNAME, config.ASSETS_DIRNAME, "Roboto-Regular.ttf"))
 
-        self.test_button = fct.create_button(self.font, (10, 10), 'Toggle stats', self.__toggle_show_stats)
-        self.test_button_2 = fct.create_button(self.font, (145, 10), 'Reset camera',
-                                               lambda: ctx.invoke_command(
+        self.toolbar_layout = fct.create_stack_layout((10, 10), 10)
+        self.add(self.toolbar_layout)
+
+        # Buttons
+        toggle_stats_btn = fct.create_button(self.font, (0, 0), 'Toggle stats', self.__toggle_show_stats)
+        self.toolbar_layout.add(toggle_stats_btn)
+
+        reset_camera_btn = fct.create_button(self.font, (0, 0), 'Reset camera',
+                                                  lambda: ctx.invoke_command(
                                                    PositionCamera('main-camera', position=(-5, 15, -5), yaw=np.pi*3/4,
                                                                   pitch=np.pi*0.22)
                                                ))
+        self.toolbar_layout.add(reset_camera_btn)
 
-        self.add(self.test_button)
-        self.add(self.test_button_2)
+        self.play_btn = fct.create_button(self.font, (0, 0), 'Play', self.__toggle_playback)
+        self.toolbar_layout.add(self.play_btn)
 
     def __toggle_show_stats(self):
         self.__showing_stats = not self.__showing_stats
-        self.__playback_manager.set_state(1)
+
+    def __toggle_playback(self):
+        new_state = 1 if self.__playback_manager.get_state() == 0 else 0
+        self.__playback_manager.set_state(new_state)
+
+        self.play_btn.set_label('Play' if new_state == 0 else 'Pause')
 
     def draw(self, delta_time: float):
         super().draw(delta_time)

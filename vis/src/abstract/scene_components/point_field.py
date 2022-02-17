@@ -11,5 +11,8 @@ class PointField(Component):
     def set_point_positions(self, positions: np.ndarray):
         raise NotImplementedError()
 
+    def set_point_densities(self, densities: np.ndarray):
+        raise NotImplementedError()
+
     def draw(self, delta_time: float):
         raise NotImplementedError()

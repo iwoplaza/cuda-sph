@@ -25,8 +25,7 @@ class StateGenerator:
 
         self.__computation_start_log()
 
-        if self.current_frame_idx > 0:
-            self.current_state = self.sph_strategy.compute_next_state(self.current_state)
+        self.current_state = self.sph_strategy.compute_next_state(self.current_state)
 
         self.__computation_end_log()
 

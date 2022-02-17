@@ -18,7 +18,7 @@ class PlaybackManager:
 
         self.loading_strategy = loading_strategy
 
-    def get_current_state(self):
+    def get_current_data(self):
         return self.loading_strategy.get_data_at_time(self.time_elapsed)
 
     def get_time_elapsed(self):
@@ -44,6 +44,9 @@ class PlaybackManager:
 
     def set_state(self, state: int) -> None:
         self.state = state
+
+    def get_state(self) -> int:
+        return self.state
 
     def set_looping(self, looping):
         self.__looping = looping

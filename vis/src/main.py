@@ -19,8 +19,9 @@ if __name__ == '__main__':
     ui_component_factory = GLUIComponentFactory()
     layer_context = GLLayerContext(window)
 
-    params = Loader(config.OUT_DIRNAME).load_simulation_parameters()
-    loading_strategy = LazySPHLoadingStrategy(config.OUT_DIRNAME)
+    loader = Loader(config.OUT_DIRNAME)
+    params = loader.load_simulation_parameters()
+    loading_strategy = LazySPHLoadingStrategy(loader)
     playback_manager = PlaybackManager(loading_strategy)
 
     window.add_layer(ViewportLayer(scene_component_factory, layer_context, playback_manager, params))

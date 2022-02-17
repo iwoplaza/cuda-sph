@@ -2,7 +2,7 @@ from typing import List
 import numpy as np
 
 from common.serializer.loader import Loader
-from common.data_classes import SimulationParameters
+from common.data_classes import SimulationParameters, SimulationState
 from vis.src.vector import Vec3f
 from .loading_strategy import LoadingStrategy
 
@@ -34,19 +34,18 @@ def move_points(points: List[Vec3f]):
 
 
 class LazySPHLoadingStrategy(LoadingStrategy):
-    def __init__(self, folder_path: str):
-        self.__loader = Loader(folder_path)
+    def __init__(self, loader: Loader):
+        self.__loader = loader
 
         params = self.__loader.load_simulation_parameters()
         self.__params: SimulationParameters = params
 
-        self.points = generate_random_points(50000)
         self.end_frame = int(params.duration * self.__params.fps) - 1
 
         self.latest_frame_index = None
         self.latest_frame_data = None
 
-    def get_data_at_time(self, time: float):
+    def get_data_at_time(self, time: float) -> SimulationState:
         """
         :param: time in seconds
         """
@@ -57,9 +56,8 @@ class LazySPHLoadingStrategy(LoadingStrategy):
             return self.latest_frame_data
 
         print(f"Epoch: {epoch + 1}/{self.end_frame + 1}")
-        data = self.__loader.load_simulation_state(epoch)
-        # print(np.round(data.position[0], 2))
-        self.latest_frame_data = data.position
+        data: SimulationState = self.__loader.load_simulation_state(epoch)
+        self.latest_frame_data = data
         self.latest_frame_index = epoch
 
         return self.latest_frame_data
