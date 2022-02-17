@@ -20,7 +20,7 @@ LAP_W_CONST = 45.0 / (PI * INF_R_6)
 # default simulation parameters
 DEFAULT_DURATION = 5
 DEFAULT_FPS = 30
-DEFAULT_N_PARTICLES = 32
+DEFAULT_N_PARTICLES = 100000
 DEFAULT_EXT_FORCE = np.array([10.0, 0.0, 0.0], dtype=np.float64)  # (x,y,z)
 DEFAULT_SPEED = 5.0
 
