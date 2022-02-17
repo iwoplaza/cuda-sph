@@ -15,7 +15,7 @@ class Loader:
         """
         :param out_dirname: path to folder with data about simulation
         """
-        self.__out_folder_path = os.path.join(config.PROJECT_DIRNAME, out_dirname)
+        self.__out_folder_path = os.path.join(config.ROOT_PROJ_DIRNAME, out_dirname)
         if not os.path.exists(self.__out_folder_path):
             raise Exception(f'Directory ({self.__out_folder_path}) does not exists! '
                             f'Could not load simulation!')

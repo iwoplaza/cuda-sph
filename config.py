@@ -3,14 +3,14 @@
     This module is really important, many modules depend on that.
 """
 import math
-import os
+import pathlib
 import numpy as np
 from random import random
 from common.data_classes import Pipe, Segment, SimulationParameters, SimulationState
 from common.pipe_builder import PipeBuilder
 
 
-SIM_MODE = 'BOX'       # 'BOX' or 'PIPE'
+SIM_MODE = 'PIPE'       # 'BOX' or 'PIPE'
 SIM_STRATEGY = 'NAIVE'  # 'NAIVE' or 'VOXEL'
 DURATION = 10
 FPS = 25
@@ -34,7 +34,9 @@ BOX_SPACE_SIZE = [20 * INF_R, 20 * INF_R, 20 * INF_R]
 PIPE_SPACE_SIZE = [20 * INF_R, 3 * INF_R, 3 * INF_R]
 GRAVITY = [0.0, -2.0, 0.0]
 HORIZONTAL_FORCE = [2.0, 0.0, 0.0]
-PROJECT_DIRNAME = os.getcwd()
+
+ROOT_PROJ_DIRNAME = pathlib.Path(__file__).parent.resolve()  # absolute path to cuda-sph
+ASSETS_DIRNAME = 'vis/assets'
 PARAMS_FILENAME = 'params.json'
 OUT_DIRNAME = 'out'
 

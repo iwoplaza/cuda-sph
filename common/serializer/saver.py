@@ -16,10 +16,10 @@ class Saver:
 
     def __init__(self, out_dirname: str, params: SimulationParameters) -> None:
         """
-        :param out_dirname: path to folder where place data simulation
+        :param out_dirname: relative (to root) path to the directory where place data simulation
         :param params: Parameters of simulation
         """
-        self.__out_folder_path = os.path.join(config.PROJECT_DIRNAME, out_dirname)
+        self.__out_folder_path = os.path.join(config.ROOT_PROJ_DIRNAME, out_dirname)
         if not os.path.exists(self.__out_folder_path):
             os.mkdir(self.__out_folder_path)
         self.__save_parameters(params)

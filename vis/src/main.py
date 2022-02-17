@@ -18,7 +18,7 @@ if __name__ == '__main__':
     scene_layer_context = GLSceneLayerContext(window)
     ui_layer_context = GLUILayerContext(window)
 
-    params = Loader('out').load_simulation_parameters()
+    params = Loader(config.OUT_DIRNAME).load_simulation_parameters()
     loading_strategy = LazySPHLoadingStrategy(config.OUT_DIRNAME)
     playback_manager = PlaybackManager(loading_strategy)
 

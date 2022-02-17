@@ -19,15 +19,15 @@ class ViewportLayer(Layer):
         self.particles = fct.create_point_field((0, 0, 0), (1, 1, 1))
         self.add(self.particles)
 
-        # self.cube = fct.create_wire_cube((0, 0, 0), params.space_size)
-        # self.add(self.cube)
         if config.SIM_MODE == 'PIPE':
             self.pipe = fct.create_wire_pipe(params.pipe)
             self.add(self.pipe)
+        else:
+            self.cube = fct.create_wire_cube((0, 0, 0), params.space_size)
+            self.add(self.cube)
 
     def _update(self, delta_time: float):
         self.playback_manager.update(delta_time)
-        # print(self.camera.)
         self.particles.set_point_positions(self.playback_manager.get_current_state())
 
 
