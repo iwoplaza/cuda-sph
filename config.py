@@ -10,11 +10,10 @@ from common.data_classes import Pipe, Segment, SimulationParameters, SimulationS
 from common.pipe_builder import PipeBuilder
 
 
-SIM_MODE = 'PIPE'       # 'BOX' or 'PIPE'
-SIM_STRATEGY = 'NAIVE'  # 'NAIVE' or 'VOXEL'
-DURATION = 10
-FPS = 25
-PARTICLE_COUNT = 5_000
+SIM_MODE = 'BOX'       # 'BOX' or 'PIPE'
+DURATION = 15
+FPS = 20
+PARTICLE_COUNT = 50_000
 MASS:  np.float64 = 1.0
 RHO_0: np.float64 = 1.0
 INF_R: np.float64 = 2.0
@@ -85,7 +84,7 @@ def __start_state_box_wall() -> SimulationState:
         position[i][0] *= BOX_SPACE_SIZE[0] * 0.1
         position[i][1] *= BOX_SPACE_SIZE[1]
         position[i][2] *= BOX_SPACE_SIZE[2]
-    base_velocity = [1.5, -2.0, 0.0]
+    base_velocity = [1.5, -5.0, -5.0]
     offset_range = 1.0
     velocity = np.zeros(PARTICLE_COUNT * 3) \
         .reshape((PARTICLE_COUNT, 3)) \
@@ -130,5 +129,7 @@ elif SIM_MODE == 'PIPE':
     start_state = __start_state_inside_pipe()
 else:
     raise Exception(f'Wrong simulation mode! ({SIM_MODE})')
+SIM_STRATEGY = 'NAIVE'  # 'NAIVE' or 'VOXEL'
+
 
 
