@@ -11,7 +11,7 @@ class GLUILayerContext(UILayerContext):
     def __init__(self, window: GLWindow):
         self.__window = window
 
-    def dispatch_command(self, command) -> None:
+    def invoke_command(self, command) -> None:
         self.__window.perform_command(command)
 
     def create_font(self, path: str, font_size: int = 18):

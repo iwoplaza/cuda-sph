@@ -4,7 +4,7 @@ from vis.src.vector import Vec3f
 
 
 class SceneLayerContext:
-    def dispatch_command(self, command) -> None:
+    def invoke_command(self, command) -> None:
         raise NotImplementedError()
 
     def create_point_field(self, origin: Vec3f, scale: Vec3f) -> PointField:

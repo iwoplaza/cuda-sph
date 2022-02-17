@@ -9,7 +9,6 @@ class ViewportLayer(Layer):
     def __init__(self, fct: SceneLayerContext, playback_manager: PlaybackManager, params: SimulationParameters):
         super().__init__()
         self.params = params
-        print(params.space_size)
         self.playback_manager = playback_manager
 
         self.camera = fct.create_camera(self.params.space_size * 1.2, yaw=np.pi / -4.0, pitch=np.pi / 4.0)
@@ -27,9 +26,11 @@ class ViewportLayer(Layer):
         print(params.pipe)
         self.add(self.pipe)
 
+    def setup(self, component_database):
+        super().setup(component_database)
+
+        self.register('main-camera', self.camera)
+
     def _update(self, delta_time: float):
         self.playback_manager.update(delta_time)
         self.particles.set_point_positions(self.playback_manager.get_current_state())
-
-
-
