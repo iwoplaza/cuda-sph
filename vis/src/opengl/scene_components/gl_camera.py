@@ -5,6 +5,17 @@ from vis.src.abstract.scene_components import Camera
 from vis.src.vector import Vec3f
 
 
+def decode_key_code(key: bytes):
+    code = int(key[0])
+    if code == 32:
+        return 'space'
+    else:
+        try:
+            return key.decode("utf-8").lower()
+        except UnicodeDecodeError:
+            return None
+
+
 class GLCamera(Camera):
     def __init__(self, window, origin: Vec3f, yaw: float = None, pitch: float = None):
         super().__init__(origin=origin)
@@ -56,6 +67,9 @@ class GLCamera(Camera):
 
         return vec
 
+    def __get_move_speed(self):
+        return 20 if self.__is_key_pressed('space') else 10
+
     def setup_projection(self, width: int, height: int):
         self.proj_mat = glm.perspective(np.pi / 2, width / height, 0.01, 1000)
 
@@ -63,20 +77,16 @@ class GLCamera(Camera):
         self.__window.use_camera(self)
 
     def on_key_pressed(self, key: bytes) -> bool:
-        try:
-            decoded = key.decode("utf-8").lower()
+        decoded = decode_key_code(key)
+        if decoded is not None:
             self.__pressed[decoded] = True
-        except UnicodeDecodeError:
-            pass
 
         return True
 
     def on_key_released(self, key: bytes) -> None:
-        try:
-            decoded = key.decode("utf-8").lower()
+        decoded = decode_key_code(key)
+        if decoded is not None:
             self.__pressed[decoded] = False
-        except UnicodeDecodeError:
-            pass
 
     def on_mouse_btn_pressed(self, x: int, y: int, button: int) -> bool:
         self.__last_mouse_coords = (x, y)
@@ -120,8 +130,7 @@ class GLCamera(Camera):
         # Moving from the perspective of the camera
         move = glm.inverse(self.view_mat) * move
 
-        move_speed = 10
-        move *= move_speed
+        move *= self.__get_move_speed()
 
         self.position = self.position + glm.vec3(move * dt)
         self.__update_view()

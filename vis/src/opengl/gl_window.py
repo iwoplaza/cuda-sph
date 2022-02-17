@@ -28,6 +28,7 @@ class GLWindow(Window):
         wind = glutCreateWindow(self.title)  # Give your window a title
 
         glEnable(GL_BLEND)
+        glBlendFunc(GL_ONE, GL_ONE)
         glEnable(GL_PROGRAM_POINT_SIZE)
         glEnable(GL_POINT_SMOOTH)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)

@@ -32,9 +32,9 @@ class GLPointField(PointField):
         glVertexAttribPointer(0, 1, GL_FLOAT, False, 1 * float_size, None)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-        # Per-instance vbo
-        self.instance_vbo = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, self.instance_vbo)
+        # Per-instance positions vbo
+        self.positions_vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.positions_vbo)
         glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES * 3 * float_size, None, GL_STREAM_DRAW)
         glVertexAttribPointer(1,
                               3,  # size
@@ -45,6 +45,19 @@ class GLPointField(PointField):
         glVertexAttribDivisor(1, 1)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
+        # Per-instance densities vbo
+        self.densities_vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.densities_vbo)
+        glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES * float_size, None, GL_STREAM_DRAW)
+        glVertexAttribPointer(2,
+                              1,  # size
+                              GL_FLOAT,  # type
+                              False,  # normalized
+                              1 * float_size,  # stride
+                              None)
+        glVertexAttribDivisor(2, 1)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+
         glBindVertexArray(0)
 
     def set_point_positions(self, positions: np.ndarray):
@@ -52,9 +65,17 @@ class GLPointField(PointField):
         arr = positions.reshape(len(positions)*3)
         self.point_count = len(positions)
 
-        glBindBuffer(GL_ARRAY_BUFFER, self.instance_vbo)
+        glBindBuffer(GL_ARRAY_BUFFER, self.positions_vbo)
         glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES * 3 * sizeof(GLfloat), None, GL_STREAM_DRAW)
         glBufferSubData(GL_ARRAY_BUFFER, 0, len(arr) * sizeof(GLfloat), arr)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+    def set_point_densities(self, densities: np.ndarray):
+        densities = np.asarray(densities, dtype=np.float32)
+
+        glBindBuffer(GL_ARRAY_BUFFER, self.densities_vbo)
+        glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES * sizeof(GLfloat), None, GL_STREAM_DRAW)
+        glBufferSubData(GL_ARRAY_BUFFER, 0, len(densities) * sizeof(GLfloat), densities)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
     def draw(self, delta_time: float):
@@ -67,7 +88,9 @@ class GLPointField(PointField):
         glBindVertexArray(self.vao)
         glEnableVertexAttribArray(0)
         glEnableVertexAttribArray(1)
+        glEnableVertexAttribArray(2)
         glDrawArraysInstanced(GL_POINTS, 0, 1, self.point_count)
         glDisableVertexAttribArray(0)
         glDisableVertexAttribArray(1)
+        glDisableVertexAttribArray(2)
         glBindVertexArray(0)

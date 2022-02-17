@@ -1,33 +1,53 @@
 from typing import Tuple
 import glm
-from vis.src.abstract.ui_components import Button
+from vis.src.abstract.ui_components import BoundingBox, Button
 from vis.src.abstract import Font
 from vis.src.opengl.common_shaders import CommonShaders
 from ..mesh import make_rectangle_mesh
 
 
 class GLButton(Button):
-    def __init__(self, font: Font, pos: Tuple[float, float], text: str, click_command=None):
+    def __init__(self, font: Font, pos: Tuple[int, int], text: str, click_command=None):
         super().__init__(font=font, pos=pos, text=text, click_command=click_command)
 
-        padding_x, padding_y = 15, 5
+        self.padding_x = 15
+        self.padding_y = 5
 
-        self.pos = pos
-        self.text_width = font.estimate_width(text)
-        self.text_origin = (pos[0] + padding_x, pos[1] + font.font_size - int(font.font_size / 5) + padding_y)
-        self.size = (self.text_width + padding_x * 2, font.font_size + padding_y * 2)
+        self.__update_bounding_box()
 
         self.shader = CommonShaders.UI_SOLID
-        self.click_command = click_command
-
-        self.panel = make_rectangle_mesh((0, 0), self.size)
+        self.panel = make_rectangle_mesh((0, 0), (1, 1))
 
         # Visual state
         self.active = False
 
+    def __update_bounding_box(self):
+        self.size = (self._text_width + self.padding_x * 2, self._font.font_size + self.padding_y * 2)
+
+        self.text_origin = (
+            self._position[0] + self.padding_x,
+            self._position[1] + self._font.font_size - int(self._font.font_size / 5) + self.padding_y
+        )
+
+        self.__bounding_box = BoundingBox(
+            min=(self._position[0], self._position[1]),
+            max=(self._position[0] + self.size[0], self._position[1] + self.size[1])
+        )
+
+    def set_label(self, text: str):
+        super().set_label(text)
+        self.__update_bounding_box()
+
+    def set_position(self, position: Tuple[int, int]):
+        super().set_position(position)
+        self.__update_bounding_box()
+
+    def get_bounding_box(self) -> BoundingBox:
+        return self.__bounding_box
+
     def on_mouse_btn_pressed(self, x: int, y: int, button: int) -> bool:
-        if (x < self.pos[0] or x > self.pos[0] + self.size[0] or
-                y < self.pos[1] or y > self.pos[1] + self.size[1]):
+        if (x < self._position[0] or x > self._position[0] + self.size[0] or
+                y < self._position[1] or y > self._position[1] + self.size[1]):
             return False
 
         if self.click_command is not None:
@@ -44,7 +64,8 @@ class GLButton(Button):
     def draw(self, delta_time: float):
         # Background
         self.shader.use()
-        model_view = glm.translate(glm.mat4(), glm.vec3(*self.pos, 0))
+        model_view = glm.translate(glm.mat4(), glm.vec3(*self._position, 0))
+        model_view = glm.scale(model_view, glm.vec3(*self.size, 1))
         self.shader.set_model_matrix(model_view)
 
         if not self.active:
@@ -55,5 +76,5 @@ class GLButton(Button):
         self.panel.draw()
 
         # Text
-        self.font.use()
-        self.font.draw_text(self.text, self.text_origin)
+        self._font.use()
+        self._font.draw_text(self._label, self.text_origin)

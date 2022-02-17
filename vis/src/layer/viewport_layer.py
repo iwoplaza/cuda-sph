@@ -1,7 +1,6 @@
 import numpy as np
 
-import config
-from common.data_classes import SimulationParameters
+from common.data_classes import SimulationParameters, SimulationState
 from vis.src.abstract import Layer, LayerContext, SceneComponentFactory
 from vis.src.playback_management import PlaybackManager
 
@@ -22,7 +21,7 @@ class ViewportLayer(Layer):
         self.particles = fct.create_point_field((0, 0, 0), (1, 1, 1))
         self.add(self.particles)
 
-        if config.SIM_MODE == 'PIPE':
+        if len(params.pipe.segments) > 0:
             self.pipe = fct.create_wire_pipe(params.pipe)
             self.add(self.pipe)
         else:
@@ -36,4 +35,6 @@ class ViewportLayer(Layer):
 
     def _update(self, delta_time: float):
         self.playback_manager.update(delta_time)
-        self.particles.set_point_positions(self.playback_manager.get_current_state())
+        state: SimulationState = self.playback_manager.get_current_data()
+        self.particles.set_point_positions(state.position)
+        self.particles.set_point_densities(state.density)
