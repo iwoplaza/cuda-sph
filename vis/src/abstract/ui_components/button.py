@@ -1,5 +1,5 @@
 from typing import Tuple
-from .font import Font
+from vis.src.abstract.font import Font
 from ..component import Component
 
 

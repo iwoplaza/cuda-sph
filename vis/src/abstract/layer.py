@@ -1,16 +1,24 @@
 from typing import List
 from .component import Component
+from .component_database import ComponentDatabase
 
 
 class Layer:
     def __init__(self):
         self.components: List[Component] = []
-
-    def add(self, component: Component):
-        self.components.append(component)
+        self._component_database: ComponentDatabase = None
 
     def _update(self, delta_time: float):
         pass
+
+    def setup(self, component_database):
+        self._component_database = component_database
+
+    def register(self, identifier: str, component: Component):
+        self._component_database.register(identifier, component)
+
+    def add(self, component: Component):
+        self.components.append(component)
 
     def draw(self, delta_time: float):
         self._update(delta_time)
