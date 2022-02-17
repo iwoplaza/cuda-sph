@@ -2,34 +2,19 @@
     This module has to be located in the project root directory.
     This module is really important, many modules depend on that.
 """
-
-
 import math
 import os
-from enum import Enum, auto
-from random import random
 import numpy as np
-from common.data_classes import SimulationState, SimulationParameters, Pipe
+from random import random
+from common.data_classes import Pipe, Segment, SimulationParameters, SimulationState
 from common.pipe_builder import PipeBuilder
 
 
-class SimMode(Enum):
-    BOX = auto()
-    PIPE = auto()
-
-
-class SimStrategy(Enum):
-    NAIVE = auto()
-    VOXEL = auto()
-
-
-SIM_MODE: SimMode = SimMode.PIPE
-SIM_STRATEGY: SimStrategy = SimStrategy.NAIVE
-
-
+SIM_MODE = 'BOX'       # 'BOX' or 'PIPE'
+SIM_STRATEGY = 'NAIVE'  # 'NAIVE' or 'VOXEL'
 DURATION = 10
-FPS = 20
-PARTICLE_COUNT = 2_000
+FPS = 25
+PARTICLE_COUNT = 5_000
 MASS:  np.float64 = 1.0
 RHO_0: np.float64 = 1.0
 INF_R: np.float64 = 2.0
@@ -53,7 +38,33 @@ PROJECT_DIRNAME = os.getcwd()
 PARAMS_FILENAME = 'params.json'
 OUT_DIRNAME = 'out'
 
-__pipe: Pipe = PipeBuilder().with_starting_radius(3) \
+
+def __create_params_pipe():
+    return SimulationParameters(
+            particle_count=PARTICLE_COUNT,
+            external_force=HORIZONTAL_FORCE,
+            duration=DURATION,
+            fps=FPS,
+            pipe=pipe,
+            space_size=PIPE_SPACE_SIZE,
+            voxel_size=VOXEL_SIZE
+        )
+
+
+def __create_params_box():
+    return SimulationParameters(
+            particle_count=PARTICLE_COUNT,
+            external_force=GRAVITY,
+            duration=DURATION,
+            fps=FPS,
+            pipe=Pipe(),
+            space_size=BOX_SPACE_SIZE,
+            voxel_size=VOXEL_SIZE
+        )
+
+
+def __build_pipe():
+    return PipeBuilder().with_starting_radius(1) \
         .add_roller_segment(1) \
         .add_increasing_segment(1, 1.2) \
         .add_roller_segment(1) \
@@ -61,36 +72,6 @@ __pipe: Pipe = PipeBuilder().with_starting_radius(3) \
         .add_roller_segment(1) \
         .transform(PIPE_SPACE_SIZE[0], PIPE_SPACE_SIZE[1]) \
         .get_result()
-
-
-def inject_start_state():
-    if SIM_MODE == SimMode.PIPE:
-        return __start_state_pipe(__pipe)
-    else:
-        return __start_state_box_wall()
-
-
-def inject_params():
-    if SIM_MODE == SimMode.PIPE:
-        return SimulationParameters(
-            particle_count=PARTICLE_COUNT,
-            external_force=HORIZONTAL_FORCE,
-            duration=DURATION,
-            fps=FPS,
-            pipe=__pipe,
-            space_size=BOX_SPACE_SIZE,
-            voxel_size=VOXEL_SIZE
-        )
-    else:
-        return SimulationParameters(
-            particle_count=PARTICLE_COUNT,
-            external_force=GRAVITY,
-            duration=DURATION,
-            fps=FPS,
-            pipe=__pipe,
-            space_size=BOX_SPACE_SIZE,
-            voxel_size=VOXEL_SIZE
-        )
 
 
 def __start_state_box_wall() -> SimulationState:
@@ -114,19 +95,38 @@ def __start_state_box_wall() -> SimulationState:
     return SimulationState(position, velocity, density)
 
 
-def __start_state_pipe(pipe: Pipe) -> SimulationState:
+def __start_state_inside_pipe() -> SimulationState:
     position = np.zeros((PARTICLE_COUNT, 3), dtype=np.float64)
+    velocity = np.zeros((PARTICLE_COUNT, 3), dtype=np.float64)
+    density = np.zeros(PARTICLE_COUNT, dtype=np.float64)
+    # place particles randomly inside pipe with horizontal velocity
     for i in range(PARTICLE_COUNT):
-        alpha = random() * 2 * np.pi
-        radius = random() * pipe.segments[0].start_radius
-        position[i][0] = 0
-        position[i][1] = math.cos(alpha) * radius
-        position[i][2] = math.sin(alpha) * radius
-    velocity = np.zeros(PARTICLE_COUNT * 3) \
-        .reshape((PARTICLE_COUNT, 3)) \
-        .astype("float64")
-    density = np.zeros(PARTICLE_COUNT).astype("float64")
-    return SimulationState(position, velocity, density)
+        x = random() * pipe.get_length()
+        segment_idx = 0
+        offset = pipe.segments[segment_idx].start_point
+        r_max = pipe.radius_at(x)
+        r = math.sqrt(random()) * r_max * 0.98
+        theta = random() * 2.0 * math.pi
+        position[i, 0] = x
+        position[i, 1] = offset[1] + r * math.cos(theta)
+        position[i, 2] = offset[2] + r * math.sin(theta)
+        velocity[i][0] = 0.0
+    return SimulationState(
+        position,
+        velocity,
+        density
+    )
 
+
+if SIM_MODE == 'BOX':
+    pipe = Pipe([Segment()])
+    params = __create_params_box()
+    start_state = __start_state_box_wall()
+elif SIM_MODE == 'PIPE':
+    pipe = __build_pipe()
+    params = __create_params_pipe()
+    start_state = __start_state_inside_pipe()
+else:
+    raise Exception(f'Wrong simulation mode! ({SIM_MODE})')
 
 
