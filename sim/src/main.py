@@ -28,19 +28,10 @@ if __name__ == '__main__':
     saver = Saver("simulation_out", params)
     generator = StateGenerator(start_state, params)
 
-    print(f"Running simulation with {params.n_particles} particles.")
-    print(f"Space size: {np.round(params.space_size, 2)}")
-    print(f"Algorithm used: {generator.sph_strategy.__class__}")
-    print(f"Duration time: {params.simulation_duration} seconds. "
-          f"Framerate: {params.fps}. "
-          f"Total frames number: {params.fps * params.simulation_duration}.")
-    print(f"Thread layout: grid size {generator.sph_strategy.grid_size}, "
-          f"block size {generator.sph_strategy.block_size}")
-
     for state in generator:
-        saver.save_next_state(state)
-        # print(f"pos: {np.round(state.position[0], 1).tolist()},"
-        #       f" vel: {np.round(state.velocity[0], 5).tolist()},"
-        #       f" force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")
+        # saver.save_next_state(state)
+        print(f"pos: {np.round(state.position[0], 1).tolist()},"
+              f" vel: {np.round(state.velocity[0], 5).tolist()},"
+              f" force:{np.round(generator.sph_strategy.result_force[0], 1).tolist()}")
 
     print("Simulation finished.")
