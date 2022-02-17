@@ -1,8 +1,7 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
 from typing import Tuple, List
-import config
 
 
 @dataclass
@@ -17,12 +16,24 @@ class Segment:
         segment_values.extend([self.start_radius, self.length])
         return np.array(segment_values, dtype=np.float64)
 
+    def radius_at(self, t: float):
+        """
+        Finds radius of a segment at given x.
+        """
+        if self.start_radius == self.end_radius:
+            return self.start_radius
+        radius_change = self.end_radius - self.start_radius
+        x_in_seg = t - self.start_point[0]
+        return self.start_radius + radius_change * (x_in_seg / self.length)
 
-@dataclass
+
+@dataclass(frozen=True)
 class Pipe:
-    segments: List[Segment]
+    segments: List[Segment] = field(default_factory=lambda: [])
 
     def to_numpy(self) -> np.ndarray:
+        if len(self.segments) == 0:
+            return np.asarray([])
         to_stack = []
         for segment in self.segments:
             to_stack.append(segment.to_numpy())
@@ -32,22 +43,46 @@ class Pipe:
         to_stack.append(last)
         return np.stack(to_stack)
 
+    def get_length(self):
+        length = 0.0
+        for segment in self.segments:
+            length += segment.length
+        return length
 
-@dataclass
+    def find_segment(self, t: float):
+        """
+        Finds the segment which contains given point at x dimension.
+        """
+        for i, segment in enumerate(self.segments):
+            start = segment.start_point[0]
+            end = segment.start_point[0] + segment.length
+            if start <= t <= end:
+                return i
+        return -1
+
+    def radius_at(self, t: float):
+        """
+        Finds radius of a pipe at given x.
+        """
+        return self.segments[self.find_segment(t)].radius_at(t)
+
+
+@dataclass(frozen=True)
 class SimulationParameters:
-    n_particles: np.int32 = config.DEFAULT_N_PARTICLES
-    external_force: np.ndarray = config.DEFAULT_EXT_FORCE
-    simulation_duration: np.int32 = config.DEFAULT_DURATION  # in seconds
-    fps: np.int32 = config.DEFAULT_FPS
-    pipe: Pipe = Pipe(segments=[Segment()])
-    space_size: np.ndarray = config.DEFAULT_SPACE_SIZE
-    voxel_size: np.ndarray = config.DEFAULT_VOXEL_SIZE
+    particle_count: np.int32 = 100
+    external_force: np.ndarray = np.asarray([0, 0, 0])
+    duration:       np.int32 = 10
+    fps:            np.int32 = 20
+    pipe:           Pipe = Pipe([Segment()])
+    space_size:     np.ndarray = np.asarray([1, 1, 1])
+    voxel_size:     np.ndarray = np.asarray([1, 1, 1])
 
 
-@dataclass
+@dataclass(frozen=True)
 class SimulationState:
-    position: np.ndarray = None  # (n x 3)
-    velocity: np.ndarray = None  # (n x 3)
-    density:  np.ndarray = None  # (n)
+    position: np.ndarray = np.asarray([[1, 1, 1]])  # (n x 3)
+    velocity: np.ndarray = np.asarray([[1, 1, 1]])  # (n x 3)
+    density:  np.ndarray = np.asarray([1])          # (n)
+
 
 

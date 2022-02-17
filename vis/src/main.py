@@ -4,6 +4,7 @@
 # - Chain of responsibility (UI events)
 # - Command (UI)
 # - Mediator (UI)
+import config
 from common.serializer.loader import Loader
 from vis.src.opengl import GLWindow
 from vis.src.opengl import GLUIComponentFactory, GLSceneComponentFactory, GLLayerContext
@@ -18,8 +19,8 @@ if __name__ == '__main__':
     ui_component_factory = GLUIComponentFactory()
     layer_context = GLLayerContext(window)
 
-    params = Loader('../simulation_out').load_simulation_parameters()
-    loading_strategy = LazySPHLoadingStrategy('../simulation_out')
+    params = Loader(config.OUT_DIRNAME).load_simulation_parameters()
+    loading_strategy = LazySPHLoadingStrategy(config.OUT_DIRNAME)
     playback_manager = PlaybackManager(loading_strategy)
 
     window.add_layer(ViewportLayer(scene_component_factory, layer_context, playback_manager, params))

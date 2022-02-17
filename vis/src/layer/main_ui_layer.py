@@ -1,5 +1,8 @@
+import os
+
 import numpy as np
 
+import config
 from vis.src.abstract import Layer, LayerContext, UIComponentFactory
 from vis.src.command.commands import PositionCamera
 from vis.src.fps_counter import FPSCounter
@@ -15,7 +18,7 @@ class MainUILayer(Layer):
         self.__showing_stats = False
         self.__fps_counter = FPSCounter()
 
-        self.font = ctx.create_font("assets/Roboto-Regular.ttf")
+        self.font = ctx.create_font(os.path.join(config.ROOT_PROJ_DIRNAME, config.ASSETS_DIRNAME, "Roboto-Regular.ttf"))
 
         self.test_button = fct.create_button(self.font, (10, 10), 'Toggle stats', self.__toggle_show_stats)
         self.test_button_2 = fct.create_button(self.font, (145, 10), 'Reset camera',

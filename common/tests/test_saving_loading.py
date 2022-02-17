@@ -1,29 +1,21 @@
 import unittest
 import shutil
 import numpy as np
-from numpy import array
 
-from common.data_classes import SimulationState, SimulationParameters, Segment
+from common.data_classes import SimulationState, SimulationParameters, Segment, Pipe
 from common.serializer.loader import Loader
 from common.serializer.saver import Saver
-
-
-def generate_simulation_state(params: SimulationParameters) -> SimulationState:
-    simulation_state = SimulationState(array(1), array(1), array(1))
-    simulation_state.set_random_from_params(params)
-    for name in vars(simulation_state).keys():
-        setattr(simulation_state, name, np.random.rand(params.n_particles, 3))
-    return simulation_state
 
 
 class MyTestCase(unittest.TestCase):
     def test_settings_loading(self):
         path = "data"
-        parameters = SimulationParameters()
-        second_segment = Segment((1.0, 0.0, 0.0), 1, 4, 5)
-        parameters.pipe.segments.append(second_segment)
-        parameters.fps = 40
-
+        parameters = SimulationParameters(
+            pipe=Pipe([
+                Segment(),
+                Segment((1.0, 0.0, 0.0), 1, 4, 5)
+            ])
+        )
         Saver(path, parameters)
         loader = Loader(path)
         loaded_parameters = loader.load_simulation_parameters()
@@ -44,8 +36,8 @@ class MyTestCase(unittest.TestCase):
         parameters = SimulationParameters()
         np.random.seed = 43
 
-        first_state = generate_simulation_state(parameters)
-        second_state = generate_simulation_state(parameters)
+        first_state = SimulationState(position=np.asarray([0, 1, 0]))
+        second_state = SimulationState(position=np.asarray([0, 2, 0]))
 
         saver = Saver(path, parameters)
         saver.save_next_state(first_state)
