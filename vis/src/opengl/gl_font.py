@@ -5,7 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 import math
 import glm
-from vis.src.abstract.ui_components import Font
+from vis.src.abstract import Font
 from vis.src.color import Color
 from vis.src.opengl.common_shaders import CommonShaders
 

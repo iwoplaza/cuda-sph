@@ -1,5 +1,5 @@
 from common.data_classes import Pipe
-from vis.src.abstract import SceneLayerContext
+from vis.src.abstract import SceneComponentFactory
 from vis.src.vector import Vec3f
 from .scene_components import GLPointField, GLCube, GLCamera, GLWireCylinder
 from .gl_window import GLWindow
@@ -7,14 +7,11 @@ from .scene_components.gl_wire_cube import GLWireCube
 from .scene_components.gl_wire_pipe import GLWirePipe
 
 
-class GLSceneLayerContext(SceneLayerContext):
+class GLSceneComponentFactory(SceneComponentFactory):
     __window: GLWindow
 
     def __init__(self, window: GLWindow):
         self.__window = window
-
-    def invoke_command(self, command) -> None:
-        self.__window.perform_command(command)
 
     def create_point_field(self, origin: Vec3f, scale: Vec3f):
         return GLPointField(origin, scale)

@@ -1,12 +1,16 @@
 import numpy as np
 
 from common.data_classes import SimulationParameters
-from vis.src.abstract import Layer, SceneLayerContext
+from vis.src.abstract import Layer, LayerContext, SceneComponentFactory
 from vis.src.playback_management import PlaybackManager
 
 
 class ViewportLayer(Layer):
-    def __init__(self, fct: SceneLayerContext, playback_manager: PlaybackManager, params: SimulationParameters):
+    def __init__(self,
+                 fct: SceneComponentFactory,
+                 ctx: LayerContext,
+                 playback_manager: PlaybackManager,
+                 params: SimulationParameters):
         super().__init__()
         self.params = params
         self.playback_manager = playback_manager

@@ -3,10 +3,7 @@ from vis.src.abstract.scene_components import PointField, Cube, Camera, WireCyli
 from vis.src.vector import Vec3f
 
 
-class SceneLayerContext:
-    def invoke_command(self, command) -> None:
-        raise NotImplementedError()
-
+class SceneComponentFactory:
     def create_point_field(self, origin: Vec3f, scale: Vec3f) -> PointField:
         raise NotImplementedError()
 

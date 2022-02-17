@@ -1,11 +1,9 @@
-from typing import Tuple
-from vis.src.abstract import UILayerContext
-from vis.src.abstract.ui_components import Font
+from vis.src.abstract import LayerContext
 from .ui_components import GLFont, GLButton
 from .gl_window import GLWindow
 
 
-class GLUILayerContext(UILayerContext):
+class GLLayerContext(LayerContext):
     __window: GLWindow
 
     def __init__(self, window: GLWindow):
@@ -16,6 +14,3 @@ class GLUILayerContext(UILayerContext):
 
     def create_font(self, path: str, font_size: int = 18):
         return GLFont(path, font_size)
-
-    def create_button(self, font: Font, pos: Tuple[int, int], label: str, click_command=None):
-        return GLButton(font=font, pos=pos, text=label, click_command=click_command)
