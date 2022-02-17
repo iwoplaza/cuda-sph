@@ -1,10 +1,9 @@
+import dataclasses
 import numpy as np
 import json
 import os
+import config
 from common.data_classes import SimulationState, SimulationParameters
-
-
-SETTINGS_FILE = "/settings.json"
 
 
 class Saver:
@@ -12,58 +11,41 @@ class Saver:
     Class for saving simulation data.
     The saver saves file in specified directory and save:
     - settings.json for parameters of simulation
-    - name.npy for parameters of simulation that are numpy arrays
     - name_%d.npy for simulation state for specified name
     """
 
-    def __init__(self, folder_path: str, simulation_parameters: SimulationParameters) -> None:
+    def __init__(self, out_dirname: str, params: SimulationParameters) -> None:
         """
-        :param folder_path: path to folder where place data simulation
-        :param simulation_parameters: Parameters of simulation
+        :param out_dirname: relative (to root) path to the directory where place data simulation
+        :param params: Parameters of simulation
         """
-        self.__folder_path = folder_path
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
-
-        self._json_object = {}
-        self.__save_parameters(simulation_parameters)
-
+        self.__out_folder_path = os.path.join(config.ROOT_PROJ_DIRNAME, out_dirname)
+        if not os.path.exists(self.__out_folder_path):
+            os.mkdir(self.__out_folder_path)
+        self.__save_parameters(params)
         self.__current_epoch = 0
 
-    def __save_parameters(self, simulation_parameters: SimulationParameters) -> None:
-        # print("Params: ", simulation_parameters)
-        for name, value in vars(simulation_parameters).items():
-            self.__manage_element(name, value)
-
-        # print(self._json_object)
-        with open(self.__folder_path + SETTINGS_FILE, "w") as file:
-            json.dump(self._json_object, file, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-
-    def __manage_element(self, name: str, value) -> None:
-        """
-        Adds element to be saved to json or saves in .npy if element is of type np.ndarray
-
-        :param name: Name of SimulationParameters variable
-        :param value: Value of SimulationParameters variable
-        """
-        if type(value) is np.ndarray:
-            np.save(self.__folder_path + "/" + name + ".npy", value)
-        else:
-            # print(name, value)
-            self._json_object[name] = value
-
-    def save_next_state(self, simulation_state: SimulationState) -> None:
+    def save_next_state(self, state: SimulationState) -> None:
         """
         Saves epoch_state and increment internal epoch counter - use only once per epoch
-
-        :param simulation_state: Dataclass with information about positions and velocity of particles
+        :param state: Dataclass with information about positions and velocity of particles
         Assuming that all are of type np.ndarray.
         """
-        for name, value in vars(simulation_state).items():
-            np.save(self.__folder_path + "/" + name + "_" + str(self.__current_epoch), value)
+        for name, value in vars(state).items():
+            np.save(os.path.join(self.__out_folder_path, name + "_" + str(self.__current_epoch)), value)
         self.__current_epoch += 1
+
+    def __save_parameters(self, params: SimulationParameters) -> None:
+        params_dict = dataclasses.asdict(params)
+
+        for key, value in params_dict.items():
+            if type(value) is np.ndarray:
+                params_dict[key] = params_dict[key].tolist()
+
+        with open(os.path.join(self.__out_folder_path, config.PARAMS_FILENAME), "w") as file:
+            json.dump(params_dict, file, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 
 if __name__ == '__main__':
-    params = SimulationParameters()
-    Saver("data", params)
+    default_params = SimulationParameters()
+    Saver("out", default_params)

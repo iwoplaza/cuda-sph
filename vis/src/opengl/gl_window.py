@@ -5,6 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 
 from vis.src.abstract import Window
+from vis.src.command.commands import Command
 from .common_shaders import CommonShaders
 from .shader import Shader, SceneShader
 from .scene_components import GLCamera
@@ -110,15 +111,8 @@ class GLWindow(Window):
     def use_camera(self, camera):
         self.current_camera = camera
 
-    def perform_command(self, command):
-        if command.type == 'position-camera':
-            self.current_camera.set_position(command.position)
-            if command.yaw is not None:
-                self.current_camera.set_yaw(command.yaw)
-            if command.pitch is not None:
-                self.current_camera.set_pitch(command.pitch)
-        else:
-            print(f"Tried to perform unknown command: \"{command.type}\". Details: {dir(command)}")
+    def perform_command(self, command: Command):
+        command.execute(self._component_database)
 
     def run(self):
         glutDisplayFunc(self.__display_func)  # Tell OpenGL to call the showScreen method continuously

@@ -1,13 +1,16 @@
+import os
+
 import numpy as np
 
-from vis.src.abstract import Layer, UILayerContext
-from vis.src.commands import PositionCamera
+import config
+from vis.src.abstract import Layer, LayerContext, UIComponentFactory
+from vis.src.command.commands import PositionCamera
 from vis.src.fps_counter import FPSCounter
 from vis.src.playback_management import PlaybackManager
 
 
 class MainUILayer(Layer):
-    def __init__(self, ctx: UILayerContext, playback_manager: PlaybackManager):
+    def __init__(self, fct: UIComponentFactory, ctx: LayerContext, playback_manager: PlaybackManager):
         super().__init__()
 
         self.__playback_manager = playback_manager
@@ -15,12 +18,13 @@ class MainUILayer(Layer):
         self.__showing_stats = False
         self.__fps_counter = FPSCounter()
 
-        self.font = ctx.create_font("assets/Roboto-Regular.ttf")
+        self.font = ctx.create_font(os.path.join(config.ROOT_PROJ_DIRNAME, config.ASSETS_DIRNAME, "Roboto-Regular.ttf"))
 
-        self.test_button = ctx.create_button(self.font, (10, 10), 'Toggle stats', self.__toggle_show_stats)
-        self.test_button_2 = ctx.create_button(self.font, (145, 10), 'Reset camera',
-                                               lambda: ctx.dispatch_command(
-                                                   PositionCamera(position=(-5, 15, -5), yaw=np.pi*3/4, pitch=np.pi*0.22)
+        self.test_button = fct.create_button(self.font, (10, 10), 'Toggle stats', self.__toggle_show_stats)
+        self.test_button_2 = fct.create_button(self.font, (145, 10), 'Reset camera',
+                                               lambda: ctx.invoke_command(
+                                                   PositionCamera('main-camera', position=(-5, 15, -5), yaw=np.pi*3/4,
+                                                                  pitch=np.pi*0.22)
                                                ))
 
         self.add(self.test_button)

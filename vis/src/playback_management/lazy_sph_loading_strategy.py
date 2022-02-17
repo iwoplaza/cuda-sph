@@ -41,7 +41,7 @@ class LazySPHLoadingStrategy(LoadingStrategy):
         self.__params: SimulationParameters = params
 
         self.points = generate_random_points(50000)
-        self.end_frame = int(params.simulation_duration * self.__params.fps) - 1
+        self.end_frame = int(params.duration * self.__params.fps) - 1
 
         self.latest_frame_index = None
         self.latest_frame_data = None
@@ -65,4 +65,4 @@ class LazySPHLoadingStrategy(LoadingStrategy):
         return self.latest_frame_data
 
     def get_duration(self):
-        return self.__params.simulation_duration
+        return self.__params.duration
