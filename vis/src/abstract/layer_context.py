@@ -1,4 +1,4 @@
-from vis.src.abstract.ui_components import Font
+from vis.src.abstract import Font
 
 
 class LayerContext:

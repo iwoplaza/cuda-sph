@@ -1,6 +1,6 @@
 .vscode/
 out/
-simulation_out/
+out_*/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

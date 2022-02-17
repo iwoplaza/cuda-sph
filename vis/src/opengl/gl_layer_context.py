@@ -1,5 +1,5 @@
 from vis.src.abstract import LayerContext
-from .ui_components import GLFont, GLButton
+from .gl_font import GLFont
 from .gl_window import GLWindow
 
 

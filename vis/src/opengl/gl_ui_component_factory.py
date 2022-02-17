@@ -1,6 +1,6 @@
 from typing import Tuple
 from vis.src.abstract import UIComponentFactory
-from vis.src.abstract.ui_components import Font
+from vis.src.abstract import Font
 from .ui_components import GLButton
 
 

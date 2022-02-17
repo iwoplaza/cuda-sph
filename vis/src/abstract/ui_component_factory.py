@@ -1,5 +1,6 @@
 from typing import Tuple
-from vis.src.abstract.ui_components import Font, Button
+from vis.src.abstract.ui_components import Button
+from vis.src.abstract import Font
 
 
 class UIComponentFactory:
