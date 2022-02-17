@@ -40,12 +40,13 @@ class StateGenerator:
         return self
 
     def __computation_start_log(self):
-        logger.info(f"Computing frame {self.current_frame_idx + 1}...")
+        logger.info(f"Computing frame {self.current_frame_idx}...")
         self.__start = timer()
 
     def __computation_end_log(self):
         logger.info(
             f"frame {self.current_frame_idx } / {self.n_frames}"
+            f"{self.current_frame_idx / float(self.n_frames)}% finished"
             f" computed in {timer() - self.__start:.4f} seconds"
         )
 
