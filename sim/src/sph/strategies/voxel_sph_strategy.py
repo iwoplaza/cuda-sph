@@ -34,7 +34,7 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         # print(self.neighbours)
         # self.neighbours = np.zeros((self.params.n_particles, MAX_NEIGHBOURS + 1), dtype=np.int32)
         self.d_neighbours = cuda.to_device(self.neighbours)
-        self.diagnostic_arr = -420 * np.ones(9)
+        self.diagnostic_arr = -420.69 * np.ones(9)
         self.d_diagnostic_arr = cuda.to_device(self.diagnostic_arr)
         self.__compute_neighbours()
         self.neighbours = self.d_neighbours.copy_to_host()
@@ -45,8 +45,6 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
         max_rows = np.max(np.abs(self.neighbours), axis=1)
         argmax = np.argmax(max_rows)
         assert max_rows[argmax] < self.params.particle_count, f"{max_rows[argmax]} {self.neighbours[argmax, :]}, {self.diagnostic_arr} {self.voxel_begin}"
-
-
 
     def __compute_neighbours(self):
         voxel_kernels.neighbours_kernel[self.grid_size, self.block_size](
@@ -92,6 +90,12 @@ class VoxelSPHStrategy(AbstractSPHStrategy):
 
         )
         cuda.synchronize()
+        print("my last neighbour= " + str(self.diagnostic_arr[0]))
+        print("my nei count= " + str(self.diagnostic_arr[1]))
+        print("my neighbours: " + str(self.d_neighbours.copy_to_host()[0].tolist()))
+        print("dens: " + str(self.d_new_density.copy_to_host()[0].tolist()))
+        print("press: " + str(self.d_new_pressure_term.copy_to_host()[0].tolist()))
+        print("visc: " + str(self.d_new_viscosity_term.copy_to_host()[0].tolist()))
 
     @sph_stage_logger(logger)
     def __organize_voxels(self):

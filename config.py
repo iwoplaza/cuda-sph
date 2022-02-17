@@ -11,9 +11,9 @@ from common.pipe_builder import PipeBuilder
 
 
 SIM_MODE = 'BOX'       # 'BOX' or 'PIPE'
-DURATION = 15
+DURATION = 8
 FPS = 20
-PARTICLE_COUNT = 50_000
+PARTICLE_COUNT = 1024
 MASS:  np.float64 = 1.0
 RHO_0: np.float64 = 1.0
 INF_R: np.float64 = 2.0
@@ -26,10 +26,10 @@ INF_R_9 = INF_R ** 9
 W_CONST = 315.0 / (64.0 * np.pi * INF_R_9)
 GRAD_W_CONST = -45.0 / (np.pi * INF_R_6)
 LAP_W_CONST = 45.0 / (np.pi * INF_R_6)
-MAX_NEIGHBOURS = 32
+MAX_NEIGHBOURS = 1024
 NEIGHBOURING_VOXELS_COUNT = 27
 VOXEL_SIZE = [INF_R, INF_R, INF_R]
-BOX_SPACE_SIZE = [20 * INF_R, 20 * INF_R, 20 * INF_R]
+BOX_SPACE_SIZE = [4 * INF_R, 4 * INF_R, 4 * INF_R]
 PIPE_SPACE_SIZE = [20 * INF_R, 3 * INF_R, 3 * INF_R]
 GRAVITY = [0.0, -2.0, 0.0]
 HORIZONTAL_FORCE = [2.0, 0.0, 0.0]
@@ -129,7 +129,7 @@ elif SIM_MODE == 'PIPE':
     start_state = __start_state_inside_pipe()
 else:
     raise Exception(f'Wrong simulation mode! ({SIM_MODE})')
-SIM_STRATEGY = 'NAIVE'  # 'NAIVE' or 'VOXEL'
+SIM_STRATEGY = 'VOXEL'  # 'NAIVE' or 'VOXEL'
 
 
 

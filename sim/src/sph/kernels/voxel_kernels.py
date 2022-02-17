@@ -82,12 +82,16 @@ def get_neighbours(
         diagnostic_arr
 ):
     max_voxel_id = space_dim[0] * space_dim[1] * space_dim[2]
+
+
     # find out in which voxel we are
     voxel = cuda.local.array(3, np.int32)
     compute_3d_voxel_idx(voxel, p_idx, position, voxel_size)
+
     # find all neighbouring voxels
     nei_voxels_indices = cuda.local.array(NEIGHBOURING_VOXELS_COUNT, np.int32)
     nei_voxels_count = neigh_voxels_1d_indices(nei_voxels_indices, voxel, space_dim)
+
     # to all neighbouring voxels assign number of particles in it
     # create accumulated array as well
     particle_count_per_nei_voxel = cuda.local.array(NEIGHBOURING_VOXELS_COUNT, np.int32)
@@ -120,7 +124,9 @@ def get_neighbours(
     # get MAX_NEIGHBOURS random neighbours
     samples_size = np.int32(min(total_neigh_count, MAX_NEIGHBOURS))
     samples = cuda.local.array(MAX_NEIGHBOURS, np.int32)
-    actual_size = random_samples(samples, samples_size, 0, total_neigh_count, rng_states, p_idx) # actual_size should be the same as samples_size in this case
+    actual_size = random_samples\
+        (samples, samples_size, 0, total_neigh_count,
+         rng_states, p_idx)  # actual_size should be the same as samples_size in this case
     i = 0
     for nei_idx in samples[:actual_size]:
         if nei_idx == p_idx:
@@ -129,8 +135,12 @@ def get_neighbours(
         nei_voxel_start = voxel_begin[nei_voxels_indices[nei_voxel_idx]]
 
         # voxel_particles_num  = particle_count_per_nei_voxel[nei_voxel_idx]
-        in_voxel_offset = nei_idx if nei_voxel_idx == 0 else (nei_idx - accum_particle_count[nei_voxel_idx - 1])
-        if nei_voxel_start + in_voxel_offset >= len(voxel_particle_map):
+        if nei_voxel_idx == 0:
+            in_voxel_offset = nei_idx
+        else:
+            in_voxel_offset = nei_idx - accum_particle_count[nei_voxel_idx - 1]
+
+        if nei_voxel_start + in_voxel_offset >= voxel_particle_map.shape[0]:
             diagnostic_arr[0] = nei_idx
             diagnostic_arr[1] = nei_voxel_idx
             diagnostic_arr[2] = nei_voxel_start
@@ -140,12 +150,14 @@ def get_neighbours(
             diagnostic_arr[6] = accum_particle_count[nei_voxel_idx]
             diagnostic_arr[7] = total_neigh_count
             diagnostic_arr[8] = particle_count_per_nei_voxel[nei_voxel_idx]
-            neighbours[i] = -420
+            neighbours[i] = -4200000000000000
         else:
             neighbours[i] = voxel_particle_map[nei_voxel_start + in_voxel_offset][1]
-        i += 1
-        if i >= MAX_NEIGHBOURS:
-            return i
+            if p_idx == 0:
+                diagnostic_arr[0] = neighbours[i]
+            i += 1
+            if i >= MAX_NEIGHBOURS:
+                return i
     return actual_size
 
 
@@ -190,11 +202,13 @@ def neighbours_kernel(
         return
     
     for j in range(MAX_NEIGHBOURS):
-        neighbours_indices[j] = -10
+        neighbours_indices[i][j] = -10
     neigh_count = get_neighbours(
         neighbours_indices[i], i, position, voxel_size,
         space_dim, voxel_begin, voxel_particle_map, rng_states, diagnostic_arr
     )
+    if i == 0:
+        diagnostic_arr[1] = neigh_count
 
 @cuda.jit
 def density_kernel(
@@ -208,8 +222,6 @@ def density_kernel(
 
     new_density = 0.0
     for j in neighbours[i]:
-        if j == i:
-            continue
         if j < 0:
             break
         new_density += compute_w(position[i], position[j])
@@ -238,14 +250,15 @@ def pressure_kernel(
             break
         p_i = K * (density[i] - RHO_0)
         p_j = K * (density[j] - RHO_0)
-        factor = p_i / density[i] ** 2 + p_j / density[j] ** 2
+        factor = (p_i + p_j) / (2 * density[j])
         grad_w = cuda.local.array(3, np.float64)
         compute_grad_w(position[i], position[j], grad_w)
+
         for dim in range(3):
             new_pressure_term[dim] += factor * grad_w[dim]
 
     for dim in range(3):
-        result_pressure_term[i][dim] = new_pressure_term[dim]
+        result_pressure_term[i][dim] = new_pressure_term[dim] * MASS
 
 
 @cuda.jit
@@ -269,12 +282,10 @@ def viscosity_kernel(
             continue
         if j < 0:
             break
-        visc_term_j = cuda.local.array(3, np.float64)
         lap_w = compute_lap_w(position[i], position[j])
         for dim in range(3):
-            visc_term_j[dim] = (velocity[j][dim] - velocity[i][dim]) / \
-                               density[j] * lap_w
-            new_viscosity_term[dim] += visc_term_j[dim] / density[i]
+            visc_term = (velocity[j][dim] - velocity[i][dim]) / density[j] * lap_w * VISC
+            new_viscosity_term[dim] += visc_term * MASS
 
     for dim in range(3):
-        result_viscosity_term[i][dim] = min(1, new_viscosity_term[dim])
+        result_viscosity_term[i][dim] = new_viscosity_term[dim]

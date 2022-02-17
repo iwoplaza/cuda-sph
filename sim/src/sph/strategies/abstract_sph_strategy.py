@@ -102,6 +102,7 @@ class AbstractSPHStrategy(ABC):
         )
         cuda.synchronize()
 
+
     @sph_stage_logger(logger)
     def __collide(self):
         if config.SIM_MODE == 'PIPE':

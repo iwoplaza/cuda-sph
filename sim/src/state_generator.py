@@ -2,6 +2,8 @@ from __future__ import annotations
 import logging
 import numpy as np
 from timeit import default_timer as timer
+
+import config
 from sim.src.sph import NaiveSPHStrategy, VoxelSPHStrategy, AbstractSPHStrategy
 from common.data_classes import SimulationState, SimulationParameters
 import sim.src.sph as sph
@@ -16,7 +18,10 @@ class StateGenerator:
         self.current_state = start_state
         self.current_frame_idx = 0
         self.n_frames = params.duration * params.fps
-        self.sph_strategy: AbstractSPHStrategy = VoxelSPHStrategy(params)
+        self.sph_strategy: AbstractSPHStrategy = VoxelSPHStrategy(params) \
+            if config.SIM_STRATEGY == 'VOXEL' \
+            else NaiveSPHStrategy(params)
+
         self.__init_log(params)
 
     def __next__(self) -> SimulationState:
