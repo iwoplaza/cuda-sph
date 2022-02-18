@@ -46,8 +46,8 @@ class StateGenerator:
     def __computation_end_log(self):
         logger.info(
             f"frame {self.current_frame_idx } / {self.n_frames} "
-            f"computed in {timer() - self.__start:.4f} seconds\n"
-            f"{self.current_frame_idx / float(self.n_frames)}% finished\n"
+            f"computed in {timer() - self.__start:.4f} seconds. "
+            f"{int(self.current_frame_idx / float(self.n_frames) * 100.0)}% finished\n"
         )
 
     def __init_log(self, params) -> None:
